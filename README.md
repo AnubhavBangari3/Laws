@@ -1,0 +1,2 @@
+# Laws
+NIYAM
