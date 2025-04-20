@@ -1,6 +1,15 @@
-import { Text, View } from 'react-native';
+import { Text, View,Pressable } from 'react-native';
+import { router } from 'expo-router'; // Needed to navigate
+
 
 export default function Main() {
+
+  const handleLogout = () => {
+
+    router.replace('/'); // Takes user back to login screen (index.tsx)
+  };
+
+
   return (
     <View className="flex-1 bg-gray-100">
       {/* Navbar */}
@@ -11,7 +20,9 @@ export default function Main() {
         <Text className="text-lg font-semibold text-white">Meditations</Text>
         <Text className="text-lg font-semibold text-white">Films</Text>
         <Text className="text-lg font-semibold text-white">E-Books</Text>
-        <Text className="text-lg font-semibold text-white">Logout</Text>
+        <Pressable onPress={handleLogout}>
+          <Text className="text-lg font-semibold text-white">Logout</Text>
+        </Pressable>
       </View>
 
       {/* Content */}
