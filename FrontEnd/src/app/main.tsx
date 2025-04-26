@@ -106,12 +106,17 @@ export default function Main() {
           </View>
 
           {/* Connect Button in middle */}
-          <Pressable
+          {/* <Pressable
             className="bg-yellow-400 px-4 py-2 rounded-full shadow-lg"
             onPress={() => Alert.alert("Connect", "Feature coming soon!")}
           >
             <Text className="text-white font-semibold text-base">Connect</Text>
-          </Pressable>
+          </Pressable> */}
+
+          <View className="items-center">
+            <Text className="text-xl font-bold">0</Text>
+            <Text className="text-gray-600">Posts</Text>
+          </View>
 
           {/* Following */}
           <View className="items-center">
