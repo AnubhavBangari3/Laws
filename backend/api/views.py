@@ -14,6 +14,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser, FormParser
 
 '''
 class LoginView(APIView):
@@ -74,8 +75,38 @@ class LogoutView(APIView):
 class ProfileView(APIView):
       permission_classes=[IsAuthenticated]
       serializer_class=ProfileSerializer
+      parser_classes = [MultiPartParser, FormParser] 
       def get(self,request):
           print("checking:",request.user)
           profile=Profile.objects.get(username_id=request.user.id)
           serializer=ProfileSerializer(profile,many=False)
           return Response(serializer.data)
+      
+      def patch(self, request):
+        print("Updating profile fields for:", request.user)
+        profile = Profile.objects.get(username_id=request.user.id)
+
+        profile.first_name = request.data.get('first_name', profile.first_name)
+        profile.last_name = request.data.get('last_name', profile.last_name)
+        profile.email = request.data.get('email', profile.email)
+        profile.about = request.data.get('about', profile.about)
+
+        profile.save()
+        serializer = ProfileSerializer(profile, many=False)
+        return Response(serializer.data, status=200)
+      
+class ProfilePictureUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # Only needed here!
+
+    def patch(self, request):
+        print("Updating profile picture for:", request.user)
+        profile = Profile.objects.get(username_id=request.user.id)
+
+        pp = request.FILES.get('pp')
+        if pp:
+            profile.pp = pp
+            profile.save()
+
+        serializer = ProfileSerializer(profile, many=False)
+        return Response(serializer.data, status=200)
