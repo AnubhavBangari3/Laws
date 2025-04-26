@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-
+from . models import Profile
 
 
 class LoginSerializer(serializers.Serializer):
@@ -83,3 +83,15 @@ class RealizerSerializer(serializers.ModelSerializer):
             return user
         except IntegrityError:
             raise ValidationError({"detail": "Username or email already exists."})
+        
+class ProfileSerializer(serializers.ModelSerializer):
+    username=serializers.PrimaryKeyRelatedField(read_only=True)
+    profile_name=serializers.SerializerMethodField("getName")
+    num_connections=serializers.SerializerMethodField("getCon")
+    class Meta:
+        model=Profile
+        fields=('id','username','first_name','last_name','email','about','pp','connections','access_token','slug','profile_name','num_connections',)
+    def getName(self,instance):
+        return instance.username.username
+    def getCon(self,instance):
+        return instance.connections.count()

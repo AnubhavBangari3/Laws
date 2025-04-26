@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView
+from .views import RegisterView,LogoutView,ProfileView
 from rest_framework.routers import DefaultRouter
 
 
@@ -11,5 +11,6 @@ urlpatterns=[
     path("",include(router.urls)),
    # path('login', LoginView.as_view(), name='login'),
    path("logout",LogoutView.as_view(),name="logout"),
+   path("profile",ProfileView.as_view(),name="profile"),
    
     ]

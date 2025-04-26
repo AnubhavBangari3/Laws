@@ -4,7 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer
+from . models import Profile
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -70,3 +71,11 @@ class LogoutView(APIView):
                 {"detail": "An error occurred during logout."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+class ProfileView(APIView):
+      permission_classes=[IsAuthenticated]
+      serializer_class=ProfileSerializer
+      def get(self,request):
+          print("checking:",request.user)
+          profile=Profile.objects.get(username_id=request.user.id)
+          serializer=ProfileSerializer(profile,many=False)
+          return Response(serializer.data)
