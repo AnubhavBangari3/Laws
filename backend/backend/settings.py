@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -104,7 +106,7 @@ REST_FRAMEWORK = {
   
 }
 ##Added end
-
+DB_PASSWROD= os.getenv("DB_PASSWROD")
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 '''
@@ -120,7 +122,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'Niyam', 
         'USER': 'postgres',
-        'PASSWORD':2722729,
+        'PASSWORD':DB_PASSWROD,
         'HOST': '127.0.0.1', 
         'PORT': '5432',
     }
