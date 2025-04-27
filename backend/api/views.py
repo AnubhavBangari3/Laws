@@ -110,3 +110,44 @@ class ProfilePictureUpdateView(APIView):
 
         serializer = ProfileSerializer(profile, many=False)
         return Response(serializer.data, status=200)
+    
+import requests
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+import os
+
+
+@api_view(['GET'])
+def fetch_audiobook(request):
+    SERP_API_KEY = os.getenv("keyprivate")
+    
+    search_query = "audiobooks"
+    
+    serpapi_url = f"https://serpapi.com/search.json?engine=google_play&q={search_query}&category=audiobooks&api_key={SERP_API_KEY}"
+
+    try:
+        resp = requests.get(serpapi_url)
+        data = resp.json()
+
+        # Extract relevant data
+        if "organic_results" in data:
+            audiobooks = []
+            for item in data["organic_results"]:
+                for audiobook in item["items"]:
+                    audiobooks.append({
+                        "title": audiobook.get("title"),
+                        "link": audiobook.get("link"),
+                        "product_id": audiobook.get("product_id"),
+                        "rating": audiobook.get("rating"),
+                        "author": audiobook.get("author"),
+                        "category": audiobook.get("category"),
+                        "downloads": audiobook.get("downloads"),
+                        "thumbnail": audiobook.get("thumbnail"),
+                    })
+            
+            return Response(audiobooks)
+        
+        return Response({"error": "No audiobooks found"}, status=404)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

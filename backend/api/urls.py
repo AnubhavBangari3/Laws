@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook
 from rest_framework.routers import DefaultRouter
 
 
@@ -13,5 +13,6 @@ urlpatterns=[
    path("logout",LogoutView.as_view(),name="logout"),
    path("profile",ProfileView.as_view(),name="profile"),
    path("profile/picture",ProfilePictureUpdateView.as_view(),name="profilep"),
+   path('audiobook/', fetch_audiobook, name='fetch_audiobook'),
    
     ]
