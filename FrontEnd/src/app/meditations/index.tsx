@@ -1,14 +1,22 @@
-import { View, Text, Pressable, SafeAreaView, Image, ScrollView } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  SafeAreaView,
+  Image,
+  ScrollView,
+} from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { useState } from "react";
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import Slider from "@react-native-community/slider";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { meditations } from "../data/meditations";
 import Navbar from "../Navbar";
 
 const MeditationDetails = () => {
-  const [currentPlayer, setCurrentPlayer] = useState(null);  // Track the currently playing meditation player
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [likedMeds, setLikedMeds] = useState<number[]>([]); // Track liked meditations
 
   const formatSeconds = (milliseconds: number) => {
     const minutes = Math.floor(milliseconds / 60000);
@@ -17,18 +25,22 @@ const MeditationDetails = () => {
   };
 
   const handlePlayPause = (player, status) => {
-    // If there's already a player playing, stop it
     if (currentPlayer && currentPlayer !== player) {
       currentPlayer.pause();
     }
-    // Start the new player or pause the current one
     if (status.playing) {
       player.pause();
-      setCurrentPlayer(null); // Clear the current player if paused
+      setCurrentPlayer(null);
     } else {
       player.play();
-      setCurrentPlayer(player); // Set the new player as the current one
+      setCurrentPlayer(player);
     }
+  };
+
+  const handleLike = (id: number) => {
+    setLikedMeds((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -57,7 +69,7 @@ const MeditationDetails = () => {
                 key={meditation.id}
                 className="bg-yellow-100 p-4 mb-4 rounded-lg shadow-lg"
               >
-                {/* Meditation Item */}
+                {/* Meditation Header */}
                 <View className="flex-row items-center">
                   <Image
                     source={meditation.image}
@@ -65,33 +77,58 @@ const MeditationDetails = () => {
                   />
                   <View className="ml-4">
                     <Text className="font-semibold text-lg">{meditation.title}</Text>
-                    <Text className="text-gray-500">{formatSeconds(meditation.duration)}</Text>
+                    <Text className="text-gray-500">
+                      {formatSeconds(meditation.duration)}
+                    </Text>
                   </View>
-                  {/* Play Button */}
                   <Pressable
                     onPress={() => handlePlayPause(player, status)}
                     className="bg-zinc-800 w-12 h-12 p-4 rounded-full items-center justify-center ml-auto"
                   >
-                    <AntDesign name={status.playing ? "pause" : "play"} size={24} color="white" />
+                    <AntDesign
+                      name={status.playing ? "pause" : "play"}
+                      size={24}
+                      color="white"
+                    />
                   </Pressable>
                 </View>
 
-                {/* Audio Progress */}
+                {/* Audio Slider */}
                 <View className="w-full mt-4">
                   <Slider
                     style={{ width: "100%", height: 40 }}
-                    value={status.duration ? status.currentTime / status.duration : 0}
-                    onSlidingComplete={(value) => player.seekTo(value * status.duration)}
+                    value={
+                      status.duration ? status.currentTime / status.duration : 0
+                    }
+                    onSlidingComplete={(value) =>
+                      player.seekTo(value * status.duration)
+                    }
                     minimumValue={0}
                     maximumValue={1}
                     minimumTrackTintColor="#4caf50"
                     maximumTrackTintColor="#ccc"
                     thumbTintColor="#4caf50"
                   />
-                  <View className="flex-row justify-between">
+                  <View className="flex-row justify-between mb-2">
                     <Text>{formatSeconds(status.currentTime)}</Text>
                     <Text>{formatSeconds(status.duration)}</Text>
                   </View>
+
+                  {/* Like Button */}
+                  <Pressable
+                    onPress={() => handleLike(meditation.id)}
+                    className="items-center mt-2"
+                  >
+                    <AntDesign
+                      name={
+                        likedMeds.includes(meditation.id) ? "heart" : "hearto"
+                      }
+                      size={24}
+                      color={
+                        likedMeds.includes(meditation.id) ? "red" : "gray"
+                      }
+                    />
+                  </Pressable>
                 </View>
               </View>
             );
