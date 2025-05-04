@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ const cardMargin = 4;
 export default function TopRatedMovies() {
   const [movies, setMovies] = useState([]);
   const rowRefs = useRef([]);
-  const scrollPositions = useRef({}); // Keep track of each row's scroll position
+  const scrollPositions = useRef({});
 
   useEffect(() => {
     const fetchAllTopRatedMovies = async () => {
@@ -65,9 +65,10 @@ export default function TopRatedMovies() {
     if (!scrollView) return;
 
     const currentX = scrollPositions.current[rowIndex] || 0;
-    const scrollAmount = direction === "right"
-      ? currentX + cardWidth * 3
-      : Math.max(0, currentX - cardWidth * 3);
+    const scrollAmount =
+      direction === "right"
+        ? currentX + cardWidth * 3
+        : Math.max(0, currentX - cardWidth * 3);
 
     scrollView.scrollTo({ x: scrollAmount, animated: true });
     scrollPositions.current[rowIndex] = scrollAmount;
@@ -77,6 +78,16 @@ export default function TopRatedMovies() {
     const x = event.nativeEvent.contentOffset.x;
     scrollPositions.current[rowIndex] = x;
   };
+
+  // ✅ Fix: Use stable callback to set refs
+  const setRowRef = useCallback(
+    (index) => (ref) => {
+      if (ref) {
+        rowRefs.current[index] = ref;
+      }
+    },
+    []
+  );
 
   return (
     <View style={styles.container}>
@@ -96,7 +107,7 @@ export default function TopRatedMovies() {
               </TouchableOpacity>
 
               <ScrollView
-                ref={(ref) => (rowRefs.current[rowIndex] = ref)}
+                ref={setRowRef(rowIndex)}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.rowScroll}
