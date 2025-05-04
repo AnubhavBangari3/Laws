@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, ScrollView, Image, Dimensions, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import Navbar from "../Navbar";
 import { apiReadAccessTOkenMovies } from "@env";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,6 +19,7 @@ const cardMargin = 4;
 export default function TopRatedMovies() {
   const [movies, setMovies] = useState([]);
   const rowRefs = useRef([]);
+  const scrollPositions = useRef({}); // Keep track of each row's scroll position
 
   useEffect(() => {
     const fetchAllTopRatedMovies = async () => {
@@ -18,12 +27,15 @@ export default function TopRatedMovies() {
 
       for (let page = 1; page <= 5; page++) {
         try {
-          const res = await fetch(`https://api.themoviedb.org/3/movie/top_rated?page=${page}`, {
-            headers: {
-              Authorization: `Bearer ${apiReadAccessTOkenMovies}`,
-              "Content-Type": "application/json",
-            },
-          });
+          const res = await fetch(
+            `https://api.themoviedb.org/3/movie/top_rated?page=${page}`,
+            {
+              headers: {
+                Authorization: `Bearer ${apiReadAccessTOkenMovies}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
           const data = await res.json();
           allMovies = [...allMovies, ...data.results];
@@ -39,53 +51,70 @@ export default function TopRatedMovies() {
     fetchAllTopRatedMovies();
   }, []);
 
-  // Corrected chunkArray function
   const chunkArray = (arr, size) => {
     return Array.from(
       { length: Math.ceil(arr.length / size) },
-      (v, i) => arr.slice(i * size, i * size + size)
+      (_, i) => arr.slice(i * size, i * size + size)
     );
   };
 
   const movieRows = chunkArray(movies, 10);
 
   const scrollRow = (rowIndex, direction) => {
-    if (!rowRefs.current[rowIndex]) return;
-    
-    const currentScroll = rowRefs.current[rowIndex]._contentOffset?.x || 0;
-    const scrollAmount = direction === 'right' 
-      ? currentScroll + (cardWidth * 2) 
-      : currentScroll - (cardWidth * 2);
-    
-    rowRefs.current[rowIndex].scrollTo({ x: scrollAmount, animated: true });
+    const scrollView = rowRefs.current[rowIndex];
+    if (!scrollView) return;
+
+    const currentX = scrollPositions.current[rowIndex] || 0;
+    const scrollAmount = direction === "right"
+      ? currentX + cardWidth * 3
+      : Math.max(0, currentX - cardWidth * 3);
+
+    scrollView.scrollTo({ x: scrollAmount, animated: true });
+    scrollPositions.current[rowIndex] = scrollAmount;
+  };
+
+  const handleScroll = (rowIndex, event) => {
+    const x = event.nativeEvent.contentOffset.x;
+    scrollPositions.current[rowIndex] = x;
   };
 
   return (
     <View style={styles.container}>
       <Navbar />
-      
+
       <ScrollView style={styles.mainScroll}>
         <Text style={styles.header}>Top Rated Movies</Text>
-        
+
         {movieRows.map((row, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.rowWrapper}>
-            <View style={styles.rowContainer}>
-              <ScrollView 
-                ref={ref => (rowRefs.current[rowIndex] = ref)}
+            <View style={styles.rowWithButtons}>
+              <TouchableOpacity
+                style={[styles.navButton, styles.leftButton]}
+                onPress={() => scrollRow(rowIndex, "left")}
+              >
+                <Ionicons name="chevron-back" size={24} color="#FFF" />
+              </TouchableOpacity>
+
+              <ScrollView
+                ref={(ref) => (rowRefs.current[rowIndex] = ref)}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.rowScroll}
+                onScroll={(e) => handleScroll(rowIndex, e)}
+                scrollEventThrottle={16}
               >
                 {row.map((movie) => (
-                  <TouchableOpacity 
-                    key={movie.id} 
+                  <TouchableOpacity
+                    key={movie.id}
                     style={styles.movieCard}
                     activeOpacity={0.8}
                   >
                     <View style={styles.imageContainer}>
                       {movie.poster_path ? (
                         <Image
-                          source={{ uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}` }}
+                          source={{
+                            uri: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                          }}
                           style={styles.movieImage}
                           resizeMode="cover"
                         />
@@ -107,19 +136,10 @@ export default function TopRatedMovies() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-            </View>
 
-            <View style={styles.navButtonsContainer}>
-              <TouchableOpacity 
-                style={styles.navButton}
-                onPress={() => scrollRow(rowIndex, 'left')}
-              >
-                <Ionicons name="chevron-back" size={24} color="#FFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.navButton}
-                onPress={() => scrollRow(rowIndex, 'right')}
+              <TouchableOpacity
+                style={[styles.navButton, styles.rightButton]}
+                onPress={() => scrollRow(rowIndex, "right")}
               >
                 <Ionicons name="chevron-forward" size={24} color="#FFF" />
               </TouchableOpacity>
@@ -130,87 +150,87 @@ export default function TopRatedMovies() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141414',
+    backgroundColor: "#141414",
   },
   mainScroll: {
     flex: 1,
   },
   header: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 12,
     marginTop: 16,
     marginBottom: 8,
   },
-  rowContainer: {
+  rowWrapper: {
     marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+  },
+  rowWithButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
   },
   rowScroll: {
-    paddingLeft: 12,
-    paddingRight: 4,
+    paddingLeft: 52,
+    paddingRight: 52,
   },
   movieCard: {
     width: cardWidth,
     marginRight: cardMargin,
   },
-  movieCardInner: {
-    width: cardWidth,
-    marginRight: cardMargin,
-  },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 0.67,
     borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: '#333',
+    overflow: "hidden",
+    backgroundColor: "#333",
   },
   movieImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   placeholderImage: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#222',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#222",
   },
   ratingBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 6,
     right: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   ratingText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 2,
   },
   movieTitle: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 12,
     marginTop: 6,
     paddingHorizontal: 2,
   },
   navButton: {
-    position: 'absolute',
-    zIndex: 1,
+    position: "absolute",
+    zIndex: 10,
     width: 40,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   leftButton: {
     left: 0,
