@@ -13,8 +13,8 @@ import { apiReadAccessTOkenMovies } from "@env";
 import { Ionicons } from "@expo/vector-icons";
 
 const { width: screenWidth } = Dimensions.get("window");
-const cardWidth = screenWidth * 0.3;
-const cardMargin = 4;
+const cardWidth = screenWidth * 0.22;
+const cardMargin = 6;
 
 export default function TopRatedMovies() {
   const [movies, setMovies] = useState([]);
