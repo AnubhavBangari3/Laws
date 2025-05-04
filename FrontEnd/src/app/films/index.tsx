@@ -20,6 +20,8 @@ export default function TopRatedMovies() {
   const [movies, setMovies] = useState([]);
   const rowRefs = useRef([]);
   const scrollPositions = useRef({});
+  const [likedMovies, setLikedMovies] = useState(new Set());
+
 
   useEffect(() => {
     const fetchAllTopRatedMovies = async () => {
@@ -50,6 +52,18 @@ export default function TopRatedMovies() {
 
     fetchAllTopRatedMovies();
   }, []);
+
+  const toggleLike = (movieId) => {
+    setLikedMovies((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(movieId)) {
+        newSet.delete(movieId);
+      } else {
+        newSet.add(movieId);
+      }
+      return newSet;
+    });
+  };
 
   const chunkArray = (arr, size) => {
     return Array.from(
@@ -141,9 +155,18 @@ export default function TopRatedMovies() {
                         </Text>
                       </View>
                     </View>
+                    <View style={styles.titleLikeContainer}>
                     <Text style={styles.movieTitle} numberOfLines={1}>
                       {movie.title}
                     </Text>
+                    <TouchableOpacity onPress={() => toggleLike(movie.id)} style={styles.likeButton}>
+                      <Ionicons
+                        name={likedMovies.has(movie.id) ? "heart" : "heart-outline"}
+                        size={16}
+                        color={likedMovies.has(movie.id) ? "red" : "#999"}
+                      />
+                    </TouchableOpacity>
+                  </View>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -249,4 +272,17 @@ const styles = StyleSheet.create({
   rightButton: {
     right: 0,
   },
+  titleLikeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+    marginTop: 6,
+  },
+  likeButton: {
+    marginLeft: 6,
+  },
+  
 });
+
+
