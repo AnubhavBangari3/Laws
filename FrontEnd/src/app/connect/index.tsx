@@ -4,7 +4,7 @@ export default function ConnectPage() {
   return (
     <View className="flex-1 bg-gray-100">
       <Navbar/>
-      <Text className="text-2xl font-bold">Connect Page 🤝</Text>
+      <Text className="text-2xl font-bold">Lets Connect</Text>
     </View>
   );
 }
