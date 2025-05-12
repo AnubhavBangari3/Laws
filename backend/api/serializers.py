@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile
+from . models import Profile,Blogs
 
 
 class LoginSerializer(serializers.Serializer):
@@ -95,3 +95,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance.username.username
     def getCon(self,instance):
         return instance.connections.count()
+
+class BlogSerializer(serializers.ModelSerializer):
+    author=serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = Blogs
+        fields = ['id', 'author', 'content', 'posted_on']
+       

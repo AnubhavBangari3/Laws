@@ -42,3 +42,11 @@ class Profile(models.Model):
     
     def __str__(self):
         return str(self.username.username)
+    
+class Blogs(models.Model):
+    author=models.ForeignKey(Profile,on_delete=models.CASCADE,related_name="post_author")
+    content=models.TextField()
+    posted_on=models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.id)

@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer
-from . models import Profile
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer
+from . models import Profile,Blogs
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -151,3 +151,19 @@ def fetch_audiobook(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+class BlogListCreateAPIView(APIView):
+    permission_classes =[IsAuthenticated]
+
+    def get(self, request):
+        blogs = Blogs.objects.all().order_by('-posted_on')
+        serializer = BlogSerializer(blogs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = BlogSerializer(data=request.data)
+        profile = Profile.objects.get(username_id=request.user.id)
+        if serializer.is_valid():
+            serializer.save(author=profile) 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
