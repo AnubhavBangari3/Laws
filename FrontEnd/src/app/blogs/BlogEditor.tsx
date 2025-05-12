@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import * as SecureStore from 'expo-secure-store';
 
 
-export default function BlogEditor() {
+export default function BlogEditor({ onPostSuccess }: { onPostSuccess?: () => void }) {
   const richText = useRef<RichEditor>(null);
   const [content, setContent] = useState("");
 
@@ -45,6 +45,7 @@ export default function BlogEditor() {
         console.log("Blog posted:", data);
         Alert.alert("Success", "Blog posted successfully!");
         setContent("");
+        onPostSuccess?.();
       } else {
         const error = await response.json();
         console.error("Failed to post blog:", error);
