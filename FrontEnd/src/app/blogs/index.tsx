@@ -1,19 +1,63 @@
-import { View, Text, ScrollView, ActivityIndicator, Alert, Platform, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import { useEffect, useState } from "react";
 import Navbar from "../Navbar";
 import BlogEditor from "./BlogEditor";
 import * as SecureStore from "expo-secure-store";
-import { Heart } from "lucide-react-native"; // if you use lucide-react-native for icons
+import { Heart } from "lucide-react-native";
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [likes, setLikes] = useState<{ [key: number]: boolean }>({}); // simple local like state
+  const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
+  const [profile, setProfile] = useState<any | null>(null);
+  const [editingBlogId, setEditingBlogId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState<string>("");
+
+  const fetchProfile = async () => {
+    try {
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      if (!accessToken) {
+        Alert.alert("Error", "No access token found.");
+        return;
+      }
+
+      const response = await fetch("http://127.0.0.1:8000/profile", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Failed to fetch profile");
+      }
+
+      const data = await response.json();
+      setProfile(data);
+    } catch (error: any) {
+      console.error("Profile Fetch Error:", error);
+      Alert.alert("Error", error.message || "An error occurred.");
+    }
+  };
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-
       const accessToken =
         Platform.OS === "web"
           ? localStorage.getItem("access_token")
@@ -48,11 +92,54 @@ export default function BlogsPage() {
   };
 
   useEffect(() => {
+    fetchProfile();
     fetchBlogs();
   }, []);
 
   const toggleLike = (id: number) => {
     setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const startEditing = (blog: any) => {
+    setEditingBlogId(blog.id);
+    setEditContent(blog.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingBlogId(null);
+    setEditContent("");
+  };
+
+  const saveEdit = async (blogId: number) => {
+    try {
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      const response = await fetch(`http://127.0.0.1:8000/blogs/${blogId}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: editContent }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Edit failed:", error);
+        Alert.alert("Error", "Could not update blog.");
+        return;
+      }
+
+      Alert.alert("Success", "Blog updated.");
+      setEditingBlogId(null);
+      fetchBlogs();
+    } catch (error) {
+      console.error("Save edit error:", error);
+      Alert.alert("Error", "Unexpected error during update.");
+    }
   };
 
   return (
@@ -66,36 +153,85 @@ export default function BlogsPage() {
         {loading ? (
           <ActivityIndicator size="large" color="#000" />
         ) : (
-          blogs.map((blog) => (
-            <View
-              key={blog.id}
-              className="bg-white rounded-2xl shadow-md mb-4 p-4"
-              style={{ elevation: 3 }}
-            >
-              <Text className="text-sm text-gray-500 mb-2">
-                Posted on: {new Date(blog.posted_on).toLocaleString()}
-              </Text>
+          blogs.map((blog) => {
+            const isOwner = profile?.id === blog.author;
+            const isEditing = editingBlogId === blog.id;
 
-              <View className="border border-gray-200 rounded-lg p-2 mb-2 bg-gray-50">
-                <Text className="text-base text-gray-800">{blog.content}</Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => toggleLike(blog.id)}
-                className="flex-row items-center mt-2"
+            return (
+              <View
+                key={blog.id}
+                className="bg-white rounded-2xl shadow-md mb-4 p-4"
+                style={{ elevation: 3 }}
               >
-                <Heart
-                  size={20}
-                  color={likes[blog.id] ? "red" : "gray"}
-                  fill={likes[blog.id] ? "red" : "none"}
-                  style={{ marginRight: 4 }}
-                />
-                <Text className="text-sm text-gray-600">
-                  {likes[blog.id] ? "Liked" : "Like"}
+                <Text className="text-sm text-gray-500 mb-2">
+                  Posted on: {new Date(blog.posted_on).toLocaleString()}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          ))
+
+                <View className="border border-gray-200 rounded-lg p-2 mb-2 bg-gray-50">
+                  {isEditing ? (
+                    <TextInput
+                      multiline
+                      value={editContent}
+                      onChangeText={setEditContent}
+                      className="text-base text-gray-800"
+                      style={{
+                        minHeight: 100,
+                        padding: 8,
+                        backgroundColor: "#fff",
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                      }}
+                    />
+                  ) : (
+                    <Text className="text-base text-gray-800">
+                      {blog.content}
+                    </Text>
+                  )}
+                </View>
+
+                <View className="flex-row justify-between items-center mt-2">
+                  <TouchableOpacity
+                    onPress={() => toggleLike(blog.id)}
+                    className="flex-row items-center"
+                  >
+                    <Heart
+                      size={20}
+                      color={likes[blog.id] ? "red" : "gray"}
+                      fill={likes[blog.id] ? "red" : "none"}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text className="text-sm text-gray-600">
+                      {likes[blog.id] ? "Liked" : "Like"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {isOwner && !isEditing && (
+                    <TouchableOpacity onPress={() => startEditing(blog)}>
+                      <Text className="text-blue-600 text-sm">Edit</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {isEditing && (
+                  <View className="flex-row gap-2 mt-2">
+                    <TouchableOpacity
+                      onPress={() => saveEdit(blog.id)}
+                      className="bg-blue-500 px-4 py-1 rounded-xl"
+                    >
+                      <Text className="text-white text-sm">Save</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={cancelEditing}
+                      className="bg-gray-300 px-4 py-1 rounded-xl"
+                    >
+                      <Text className="text-gray-800 text-sm">Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </View>
