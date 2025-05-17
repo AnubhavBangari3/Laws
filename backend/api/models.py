@@ -44,9 +44,13 @@ class Profile(models.Model):
         return str(self.username.username)
     
 class Blogs(models.Model):
-    author=models.ForeignKey(Profile,on_delete=models.CASCADE,related_name="post_author")
-    content=models.TextField()
-    posted_on=models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="post_author")
+    content = models.TextField()
+    posted_on = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(Profile, related_name='liked_blogs', blank=True)
 
     def __str__(self):
         return str(self.id)
+
+    def total_likes(self):
+        return self.likes.count()

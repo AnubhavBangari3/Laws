@@ -21,6 +21,8 @@ interface Blog {
   posted_on: string;
   author: number;
   author_name: string;
+  liked_by_user: boolean;
+  total_likes: number;
 }
 
 interface Profile {
@@ -111,10 +113,47 @@ export default function BlogsPage() {
     fetchBlogs();
   }, []);
 
-  const toggleLike = (id: number) => {
-    setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const toggleLike = async (blogId: number) => {
+  try {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
 
+    const response = await fetch(`http://127.0.0.1:8000/blogs/${blogId}/like/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Failed to toggle like:", error);
+      Alert.alert("Error", "Could not toggle like.");
+      return;
+    }
+
+    const result = await response.json();
+
+    // Update blog state with new like info
+    setBlogs((prevBlogs) =>
+      prevBlogs.map((blog) =>
+        blog.id === blogId
+          ? {
+              ...blog,
+              liked_by_user: result.liked,
+              total_likes: result.total_likes,
+            }
+          : blog
+      )
+    );
+  } catch (error) {
+    console.error("Toggle like error:", error);
+    Alert.alert("Error", "Unexpected error during like toggle.");
+  }
+};
   const startEditing = (blog: Blog) => {
     setEditingBlogId(blog.id);
     setEditContent(blog.content);
@@ -215,12 +254,12 @@ export default function BlogsPage() {
                   >
                     <Heart
                       size={20}
-                      color={likes[blog.id] ? "red" : "gray"}
-                      fill={likes[blog.id] ? "red" : "none"}
+                      color={blog.liked_by_user ? "red" : "gray"}
+                      fill={blog.liked_by_user ? "red" : "none"}
                       style={{ marginRight: 4 }}
                     />
                     <Text className="text-sm text-gray-600">
-                      {likes[blog.id] ? "Liked" : "Like"}
+                     {blog.liked_by_user ? "Liked" : "Like"} • {blog.total_likes}
                     </Text>
                   </TouchableOpacity>
 

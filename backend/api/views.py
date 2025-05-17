@@ -184,3 +184,22 @@ class BlogRetrieveUpdateAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class BlogLikeToggleAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        blog = get_object_or_404(Blogs, pk=pk)
+        profile = Profile.objects.get(username_id=request.user.id)
+
+        if blog.likes.filter(pk=profile.pk).exists():
+            blog.likes.remove(profile)
+            liked = False
+        else:
+            blog.likes.add(profile)
+            liked = True
+
+        return Response({
+            'liked': liked,
+            'total_likes': blog.likes.count()
+        }, status=status.HTTP_200_OK)

@@ -99,10 +99,19 @@ class ProfileSerializer(serializers.ModelSerializer):
 class BlogSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
     author_name = serializers.SerializerMethodField()
+    liked_by_user = serializers.SerializerMethodField()
+    total_likes = serializers.IntegerField()
 
     class Meta:
         model = Blogs
-        fields = ['id', 'author', 'author_name', 'content', 'posted_on']
+        fields = ['id', 'author', 'author_name', 'content', 'posted_on', 'liked_by_user', 'total_likes']
+
 
     def get_author_name(self, obj):
         return f"{obj.author.first_name}" if obj.author.first_name else obj.author.username
+    
+    def get_liked_by_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
