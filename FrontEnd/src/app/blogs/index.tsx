@@ -14,11 +14,26 @@ import BlogEditor from "./BlogEditor";
 import * as SecureStore from "expo-secure-store";
 import { Heart } from "lucide-react-native";
 
+// Type definitions
+interface Blog {
+  id: number;
+  content: string;
+  posted_on: string;
+  author: number;
+  author_name: string;
+}
+
+interface Profile {
+  id: number;
+  name: string;
+  // Add more fields if needed
+}
+
 export default function BlogsPage() {
-  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(false);
   const [likes, setLikes] = useState<{ [key: number]: boolean }>({});
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [editingBlogId, setEditingBlogId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState<string>("");
 
@@ -100,7 +115,7 @@ export default function BlogsPage() {
     setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const startEditing = (blog: any) => {
+  const startEditing = (blog: Blog) => {
     setEditingBlogId(blog.id);
     setEditContent(blog.content);
   };
@@ -163,6 +178,9 @@ export default function BlogsPage() {
                 className="bg-white rounded-2xl shadow-md mb-4 p-4"
                 style={{ elevation: 3 }}
               >
+                <Text className="text-sm text-gray-500 mb-1">
+                  Author: {blog.author_name}
+                </Text>
                 <Text className="text-sm text-gray-500 mb-2">
                   Posted on: {new Date(blog.posted_on).toLocaleString()}
                 </Text>

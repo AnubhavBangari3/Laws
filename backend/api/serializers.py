@@ -97,8 +97,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance.connections.count()
 
 class BlogSerializer(serializers.ModelSerializer):
-    author=serializers.PrimaryKeyRelatedField(read_only=True)
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
+    author_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Blogs
-        fields = ['id', 'author', 'content', 'posted_on']
-       
+        fields = ['id', 'author', 'author_name', 'content', 'posted_on']
+
+    def get_author_name(self, obj):
+        return f"{obj.author.first_name}" if obj.author.first_name else obj.author.username

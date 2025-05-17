@@ -15,6 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
 
 '''
 class LoginView(APIView):
@@ -166,4 +167,20 @@ class BlogListCreateAPIView(APIView):
         if serializer.is_valid():
             serializer.save(author=profile) 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class BlogRetrieveUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        blog = get_object_or_404(Blogs, pk=pk)
+        profile = Profile.objects.get(username_id=request.user.id)
+        # Ensure only the owner can edit
+        if blog.author != profile:
+            return Response({"detail": "You do not have permission to edit this blog."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = BlogSerializer(blog, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
