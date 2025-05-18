@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer
-from . models import Profile,Blogs
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer
+from . models import Profile,Blogs,Audiobook
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -152,6 +152,45 @@ def fetch_audiobook(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+class Like_audiobook(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_profile = Profile.objects.get(username_id=request.user.id)
+        product_id = request.data.get('product_id')
+
+        if not product_id:
+            return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the audiobook is already liked (exists)
+        try:
+            liked_audiobook = Audiobook.objects.get(prof_user=user_profile, product_id=product_id)
+            liked_audiobook.delete()
+            return Response({'message': 'Audiobook unliked successfully'}, status=status.HTTP_200_OK)
+        except Audiobook.DoesNotExist:
+            # Add the audiobook if not already liked
+            audiobook = Audiobook.objects.create(
+                prof_user=user_profile,
+                product_id=product_id,
+                title=request.data.get('title', 'Unknown'),
+                link=request.data.get('link', 'http://example.com'),
+                rating=request.data.get('rating'),
+                author=request.data.get('author'),
+                category=request.data.get('category'),
+                downloads=request.data.get('downloads'),
+                thumbnail=request.data.get('thumbnail'),
+            )
+            return Response({'message': 'Audiobook liked successfully'}, status=status.HTTP_201_CREATED)
+    def get(self, request):
+        user_profile = Profile.objects.get(username_id=request.user.id)
+        liked_audiobooks = Audiobook.objects.filter(prof_user=user_profile)
+        serializer = AudiobookSerializer(liked_audiobooks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 class BlogListCreateAPIView(APIView):
     permission_classes =[IsAuthenticated]

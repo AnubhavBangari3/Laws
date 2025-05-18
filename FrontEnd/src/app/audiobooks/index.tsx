@@ -6,10 +6,12 @@ import {
   Image,
   Dimensions,
   StyleSheet,
+  Platform,
   TouchableOpacity,
 } from "react-native";
 import Navbar from "../Navbar";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 
 const { width: screenWidth } = Dimensions.get("window");
 const cardWidth = screenWidth * 0.25;
@@ -20,6 +22,7 @@ export default function AudiobooksPage() {
   const [likedBooks, setLikedBooks] = useState({}); // Track liked books by product_id
   const rowRefs = useRef([]);
   const scrollPositions = useRef({});
+
 
   useEffect(() => {
     const fetchAudiobook = async () => {
@@ -39,25 +42,110 @@ export default function AudiobooksPage() {
       }
     };
 
-    fetchAudiobook();
+
+  fetchAudiobook();
+ 
   }, []);
 
-  const toggleLike = (productId) => {
-    setLikedBooks(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-    
-    // Here you could also make an API call to save the like status to your backend
-    // Example:
-    // fetch(`http://127.0.0.1:8000/audiobook/${productId}/like/`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({ liked: !likedBooks[productId] }),
-    // });
+    const fetchAudiobookAndLikes = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/audiobook/");
+      const result = await response.json();
+      setAudiobooks(result);
+
+      // Now fetch liked books
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      const res = await fetch("http://127.0.0.1:8000/audiobook/like/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const liked = await res.json();
+      const likedMap = {};
+
+      // Default to false, then overwrite if liked
+      result.forEach(book => {
+        likedMap[book.product_id] = false;
+      });
+
+      liked.forEach(book => {
+        likedMap[book.product_id] = true;
+      });
+
+      setLikedBooks(likedMap);
+    } catch (error) {
+      console.error("Error fetching audiobooks or liked status:", error);
+    }
   };
+  useEffect(() => {
+
+
+  fetchAudiobookAndLikes();
+}, []);
+
+  //console.log("audiobooks:",audiobooks);
+const toggleLike = async (productId: string) => {
+  // Optimistically update UI
+  setLikedBooks((prev) => ({
+    ...prev,
+    [productId]: !prev[productId],
+  }));
+
+  try {
+    
+    const accessToken =
+          Platform.OS === "web"
+            ? localStorage.getItem("access_token")
+            : await SecureStore.getItemAsync("access_token");
+
+    const book = audiobooks.find(book => book.product_id === productId);
+    if (!book) return;
+
+    const response = await fetch("http://127.0.0.1:8000/audiobook/like/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`, // Use token from login
+      },
+      body: JSON.stringify({
+        product_id: book.product_id,
+        title: book.title,
+        link: book.link,
+        rating: book.rating,
+        author: book.author,
+        category: book.category,
+        downloads: book.downloads,
+        thumbnail: book.thumbnail,
+      }),
+          });
+
+    const result = await response.json();
+    console.log("Like response:", result);
+
+    if (response.status === 200 && result.message === "Already liked") {
+      // Already liked, so toggle it back off
+      setLikedBooks((prev) => ({
+        ...prev,
+        [productId]: true,
+      }));
+    }
+    await fetchAudiobookAndLikes();
+  } catch (error) {
+    console.error("Error liking audiobook:", error);
+    // Roll back UI change on error
+    setLikedBooks((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+  }
+};
+
 
   const chunkArray = (arr, size) => {
     return Array.from(

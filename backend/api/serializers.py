@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs
+from . models import Profile,Blogs,Audiobook
 
 
 class LoginSerializer(serializers.Serializer):
@@ -115,3 +115,9 @@ class BlogSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
+    
+class AudiobookSerializer(serializers.ModelSerializer):
+    #prof_user=serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = Audiobook
+        fields = ['product_id']

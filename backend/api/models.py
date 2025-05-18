@@ -54,3 +54,18 @@ class Blogs(models.Model):
 
     def total_likes(self):
         return self.likes.count()
+
+class Audiobook(models.Model):
+    prof_user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='liked_audiobooks')
+    title = models.CharField(max_length=255)
+    link = models.URLField()
+    product_id = models.CharField(max_length=100, unique=True)
+    rating = models.FloatField(null=True, blank=True)
+    author = models.CharField(max_length=255, null=True, blank=True)
+    category = models.CharField(max_length=255, null=True, blank=True)
+    downloads = models.CharField(max_length=255, null=True, blank=True)
+    thumbnail = models.URLField(null=True, blank=True)
+    liked_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.prof_user.username})"
