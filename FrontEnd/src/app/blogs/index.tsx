@@ -72,41 +72,74 @@ export default function BlogsPage() {
     }
   };
 
-  const fetchBlogs = async () => {
-    try {
-      setLoading(true);
-      const accessToken =
-        Platform.OS === "web"
-          ? localStorage.getItem("access_token")
-          : await SecureStore.getItemAsync("access_token");
+const fetchBlogs = async () => {
+  try {
+    setLoading(true);
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
 
-      if (!accessToken) {
-        Alert.alert("Error", "No access token found.");
-        return;
-      }
-
-      const res = await fetch("http://127.0.0.1:8000/blogs/", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        console.error("Failed to fetch blogs:", error);
-        Alert.alert("Error", "Failed to fetch blogs.");
-        return;
-      }
-
-      const data = await res.json();
-      setBlogs(data);
-    } catch (error) {
-      console.error("Error fetching blogs:", error);
-      Alert.alert("Error", "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
+    if (!accessToken) {
+      Alert.alert("Error", "No access token found.");
+      return;
     }
-  };
+
+    const res = await fetch("http://127.0.0.1:8000/blogs/", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      console.error("Failed to fetch blogs:", error);
+      Alert.alert("Error", "Failed to fetch blogs.");
+      return;
+    }
+
+    const blogList = await res.json();
+
+    // Fetch like status for each blog in parallel
+    const enrichedBlogs = await Promise.all(
+      blogList.map(async (blog: Blog) => {
+        try {
+          const statusRes = await fetch(`http://127.0.0.1:8000/blogs/${blog.id}/like-status/`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          if (!statusRes.ok) {
+            throw new Error("Failed to fetch like status");
+          }
+
+          const likeData = await statusRes.json();
+
+          return {
+            ...blog,
+            liked_by_user: likeData.liked,
+            total_likes: likeData.total_likes,
+          };
+        } catch (err) {
+          console.error(`Error fetching like status for blog ${blog.id}:`, err);
+          return {
+            ...blog,
+            liked_by_user: false,
+            total_likes: 0,
+          };
+        }
+      })
+    );
+
+    setBlogs(enrichedBlogs);
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
+    Alert.alert("Error", "An unexpected error occurred.");
+  } finally {
+    setLoading(false);
+  }
+}
 
   useEffect(() => {
     fetchProfile();

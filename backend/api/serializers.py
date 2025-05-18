@@ -100,7 +100,7 @@ class BlogSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
     author_name = serializers.SerializerMethodField()
     liked_by_user = serializers.SerializerMethodField()
-    total_likes = serializers.IntegerField()
+    total_likes = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Blogs

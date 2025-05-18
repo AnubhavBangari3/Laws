@@ -203,3 +203,16 @@ class BlogLikeToggleAPIView(APIView):
             'liked': liked,
             'total_likes': blog.likes.count()
         }, status=status.HTTP_200_OK)
+    
+class BlogLikeStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        blog = get_object_or_404(Blogs, pk=pk)
+        profile = Profile.objects.get(username_id=request.user.id)
+        liked = blog.likes.filter(pk=profile.pk).exists()
+
+        return Response({
+            'liked': liked,
+            'total_likes': blog.likes.count()
+        }, status=status.HTTP_200_OK)

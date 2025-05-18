@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView
 from rest_framework.routers import DefaultRouter
 
 
@@ -17,4 +17,5 @@ urlpatterns=[
    path('blogs/', BlogListCreateAPIView.as_view(), name='blog-list-create'),
    path('blogs/<int:pk>/', BlogRetrieveUpdateAPIView.as_view(), name='blog-update'),
    path('blogs/<int:pk>/like/', BlogLikeToggleAPIView.as_view(), name='blog-like-toggle'),
+   path('blogs/<int:pk>/like-status/', BlogLikeStatusAPIView.as_view(), name='blog-like-status'),
     ]
