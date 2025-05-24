@@ -318,6 +318,9 @@ export default function Main() {
           </View>
         )}
       </ScrollView>
+      <View>
+        <Text className="text-lg font-semibold mb-2">Recent Activities</Text>
+      </View>
     </View>
   );
 }
