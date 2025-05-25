@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -21,7 +21,8 @@ const BACKEND_URL = "http://127.0.0.1:8000/meditation/like/";
 
 const MeditationDetails = () => {
   const [currentPlayer, setCurrentPlayer] = useState(null);
-  const [likedMeds, setLikedMeds] = useState<number[]>([]);
+  const [likedMeds, setLikedMeds] = useState<string[]>([]);
+  const [loadingLikes, setLoadingLikes] = useState<Record<string, boolean>>({});
 
   // Format time from ms
   const formatSeconds = (milliseconds: number) => {
@@ -43,13 +44,16 @@ const MeditationDetails = () => {
     }
   };
 
-  const handleLike = async (meditation) => {
-    const accessToken =
-      Platform.OS === "web"
-        ? localStorage.getItem("access_token")
-        : await SecureStore.getItemAsync("access_token");
-
+  const handleLike = useCallback(async (meditation) => {
+    const medTitle = meditation.title;
     try {
+      setLoadingLikes((prev) => ({ ...prev, [medTitle]: true }));
+
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
       const response = await fetch(BACKEND_URL, {
         method: "POST",
         headers: {
@@ -67,28 +71,31 @@ const MeditationDetails = () => {
       const data = await response.json();
 
       if (response.ok) {
-        if (data.message.includes("unliked")) {
-          setLikedMeds((prev) => prev.filter((id) => id !== meditation.id));
-        } else {
-          setLikedMeds((prev) => [...prev, meditation.id]);
-        }
+        setLikedMeds((prev) => {
+          const isLiked = prev.includes(medTitle);
+          return isLiked
+            ? prev.filter((title) => title !== medTitle)
+            : [...prev, medTitle];
+        });
       } else {
         Alert.alert("Error", data.message || "Something went wrong");
       }
     } catch (error) {
       Alert.alert("Error", "Failed to update like status");
+    } finally {
+      setLoadingLikes((prev) => ({ ...prev, [medTitle]: false }));
     }
-  };
+  }, []);
 
-  // ✅ GET liked meditations on mount
+  // Get liked meditations on mount
   useEffect(() => {
     const fetchLikedMeditations = async () => {
-      const accessToken =
-        Platform.OS === "web"
-          ? localStorage.getItem("access_token")
-          : await SecureStore.getItemAsync("access_token");
-
       try {
+        const accessToken =
+          Platform.OS === "web"
+            ? localStorage.getItem("access_token")
+            : await SecureStore.getItemAsync("access_token");
+
         const response = await fetch(BACKEND_URL, {
           method: "GET",
           headers: {
@@ -97,15 +104,16 @@ const MeditationDetails = () => {
         });
 
         const data = await response.json();
+        console.log("data:", data);
 
         if (response.ok) {
-          const likedIds = data.map((med) => med.id);
-          setLikedMeds(likedIds);
+          const likedTitles = data.map((med) => med.title);
+          setLikedMeds(likedTitles);
         } else {
-          Alert.alert("Error", data.message || "Failed to fetch likes");
+          console.error("Failed to fetch likes:", data.message);
         }
       } catch (error) {
-        Alert.alert("Error", "Unable to load liked meditations");
+        console.error("Unable to load liked meditations:", error);
       }
     };
 
@@ -132,6 +140,8 @@ const MeditationDetails = () => {
           {meditations.map((meditation) => {
             const player = useAudioPlayer(meditation.audio);
             const status = useAudioPlayerStatus(player);
+            const isLiked = likedMeds.includes(meditation.title);
+            const isLoading = loadingLikes[meditation.title];
 
             return (
               <View
@@ -185,16 +195,19 @@ const MeditationDetails = () => {
 
                   {/* Like Button */}
                   <Pressable
-                    onPress={() => handleLike(meditation)}
+                    onPress={() => !isLoading && handleLike(meditation)}
                     className="items-center mt-2"
+                    disabled={isLoading}
                   >
-                    <AntDesign
-                      name={
-                        likedMeds.includes(meditation.id) ? "heart" : "hearto"
-                      }
-                      size={24}
-                      color={likedMeds.includes(meditation.id) ? "red" : "gray"}
-                    />
+                    {isLoading ? (
+                      <AntDesign name="loading1" size={24} color="gray" />
+                    ) : (
+                      <AntDesign
+                        name={isLiked ? "heart" : "hearto"}
+                        size={24}
+                        color={isLiked ? "red" : "gray"}
+                      />
+                    )}
                   </Pressable>
                 </View>
               </View>

@@ -238,6 +238,7 @@ class LikeMeditationAPIView(APIView):
     def get(self, request):
         user_profile = Profile.objects.get(username_id=request.user.id)
         liked_meditations = Meditation.objects.filter(prof_userM=user_profile)
+        print("liked_meditations:",liked_meditations)
         serializer = MeditationSerializer(liked_meditations, many=True, context={"request": request})
         return Response(serializer.data, status=200)
 
