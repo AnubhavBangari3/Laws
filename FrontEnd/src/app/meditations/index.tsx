@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -17,14 +17,13 @@ import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { meditations } from "../data/meditations";
 import Navbar from "../Navbar";
 
-// You need to provide your backend URL and token here or get them dynamically
 const BACKEND_URL = "http://127.0.0.1:8000/meditation/like/";
-
 
 const MeditationDetails = () => {
   const [currentPlayer, setCurrentPlayer] = useState(null);
-  const [likedMeds, setLikedMeds] = useState<number[]>([]); // Track liked meditations
+  const [likedMeds, setLikedMeds] = useState<number[]>([]);
 
+  // Format time from ms
   const formatSeconds = (milliseconds: number) => {
     const minutes = Math.floor(milliseconds / 60000);
     const seconds = Math.floor((milliseconds % 60000) / 1000);
@@ -44,14 +43,12 @@ const MeditationDetails = () => {
     }
   };
 
-  // New handleLike function with API call
   const handleLike = async (meditation) => {
-
     const accessToken =
-            Platform.OS === "web"
-              ? localStorage.getItem("access_token")
-              : await SecureStore.getItemAsync("access_token");
-    // meditation = { id, title, image, audio, duration }
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
     try {
       const response = await fetch(BACKEND_URL, {
         method: "POST",
@@ -61,8 +58,8 @@ const MeditationDetails = () => {
         },
         body: JSON.stringify({
           title: meditation.title,
-          image: meditation.image.uri, // assuming image is {uri: '...'}
-          audio: meditation.audio, // string url of audio file
+          image: meditation.image.uri,
+          audio: meditation.audio,
           duration: meditation.duration,
         }),
       });
@@ -71,10 +68,8 @@ const MeditationDetails = () => {
 
       if (response.ok) {
         if (data.message.includes("unliked")) {
-          // Remove from likedMeds
           setLikedMeds((prev) => prev.filter((id) => id !== meditation.id));
         } else {
-          // Add to likedMeds
           setLikedMeds((prev) => [...prev, meditation.id]);
         }
       } else {
@@ -84,6 +79,38 @@ const MeditationDetails = () => {
       Alert.alert("Error", "Failed to update like status");
     }
   };
+
+  // ✅ GET liked meditations on mount
+  useEffect(() => {
+    const fetchLikedMeditations = async () => {
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          const likedIds = data.map((med) => med.id);
+          setLikedMeds(likedIds);
+        } else {
+          Alert.alert("Error", data.message || "Failed to fetch likes");
+        }
+      } catch (error) {
+        Alert.alert("Error", "Unable to load liked meditations");
+      }
+    };
+
+    fetchLikedMeditations();
+  }, []);
 
   return (
     <ScrollView>
@@ -111,7 +138,7 @@ const MeditationDetails = () => {
                 key={meditation.id}
                 className="bg-yellow-100 p-4 mb-4 rounded-lg shadow-lg"
               >
-                {/* Meditation Header */}
+                {/* Header */}
                 <View className="flex-row items-center">
                   <Image
                     source={meditation.image}
@@ -135,7 +162,7 @@ const MeditationDetails = () => {
                   </Pressable>
                 </View>
 
-                {/* Audio Slider */}
+                {/* Slider */}
                 <View className="w-full mt-4">
                   <Slider
                     style={{ width: "100%", height: 40 }}
