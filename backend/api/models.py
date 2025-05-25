@@ -69,3 +69,14 @@ class Audiobook(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.prof_user.username})"
+    
+class Meditation(models.Model):
+    prof_userM = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='liked_meditation')
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to="meditation_images/")
+    audio = models.FileField(upload_to="meditation_audios/")
+    duration = models.PositiveIntegerField(help_text="Duration in milliseconds")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

@@ -6,13 +6,20 @@ import {
   SafeAreaView,
   Image,
   ScrollView,
+  Platform,
+  Alert,
 } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { AntDesign } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import Slider from "@react-native-community/slider";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { meditations } from "../data/meditations";
 import Navbar from "../Navbar";
+
+// You need to provide your backend URL and token here or get them dynamically
+const BACKEND_URL = "http://127.0.0.1:8000/meditation/like/";
+
 
 const MeditationDetails = () => {
   const [currentPlayer, setCurrentPlayer] = useState(null);
@@ -37,10 +44,45 @@ const MeditationDetails = () => {
     }
   };
 
-  const handleLike = (id: number) => {
-    setLikedMeds((prev) =>
-      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
-    );
+  // New handleLike function with API call
+  const handleLike = async (meditation) => {
+
+    const accessToken =
+            Platform.OS === "web"
+              ? localStorage.getItem("access_token")
+              : await SecureStore.getItemAsync("access_token");
+    // meditation = { id, title, image, audio, duration }
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          title: meditation.title,
+          image: meditation.image.uri, // assuming image is {uri: '...'}
+          audio: meditation.audio, // string url of audio file
+          duration: meditation.duration,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.message.includes("unliked")) {
+          // Remove from likedMeds
+          setLikedMeds((prev) => prev.filter((id) => id !== meditation.id));
+        } else {
+          // Add to likedMeds
+          setLikedMeds((prev) => [...prev, meditation.id]);
+        }
+      } else {
+        Alert.alert("Error", data.message || "Something went wrong");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to update like status");
+    }
   };
 
   return (
@@ -116,7 +158,7 @@ const MeditationDetails = () => {
 
                   {/* Like Button */}
                   <Pressable
-                    onPress={() => handleLike(meditation.id)}
+                    onPress={() => handleLike(meditation)}
                     className="items-center mt-2"
                   >
                     <AntDesign
@@ -124,9 +166,7 @@ const MeditationDetails = () => {
                         likedMeds.includes(meditation.id) ? "heart" : "hearto"
                       }
                       size={24}
-                      color={
-                        likedMeds.includes(meditation.id) ? "red" : "gray"
-                      }
+                      color={likedMeds.includes(meditation.id) ? "red" : "gray"}
                     />
                   </Pressable>
                 </View>

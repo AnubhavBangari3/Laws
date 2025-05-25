@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer
-from . models import Profile,Blogs,Audiobook
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer
+from . models import Profile,Blogs,Audiobook,Meditation
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -187,8 +187,54 @@ class Like_audiobook(APIView):
         liked_audiobooks = Audiobook.objects.filter(prof_user=user_profile)
         serializer = AudiobookSerializer(liked_audiobooks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+from django.core.files.base import ContentFile
 
+class LikeMeditationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        user_profile = Profile.objects.get(username_id=request.user.id)
+        data = request.data
+
+        title = data.get('title')
+        image_url = data.get('image')
+        audio_url = data.get('audio')
+        duration = data.get('duration')
+        # Handle relative URLs
+        if image_url and image_url.startswith("/"):
+            image_url = f"http://127.0.0.1:8081{image_url}"  # or your frontend domain
+
+        if audio_url and audio_url.startswith("/"):
+            audio_url = f"http://127.0.0.1:8081{audio_url}"
+
+        # Check if already liked
+        existing_meditation = Meditation.objects.filter(prof_userM=user_profile, title=title).first()
+
+        if existing_meditation:
+            existing_meditation.delete()
+            return Response({'message': 'Meditation unliked and removed'}, status=200)
+
+        # Download image
+        image_response = requests.get(image_url)
+        image_name = os.path.basename(image_url)
+        image_file = ContentFile(image_response.content, name=image_name)
+
+        # Download audio
+        audio_response = requests.get(audio_url)
+        audio_name = os.path.basename(audio_url)
+        audio_file = ContentFile(audio_response.content, name=audio_name)
+
+        # Create new Meditation
+        Meditation.objects.create(
+            prof_userM=user_profile,
+            title=title,
+            image=image_file,
+            audio=audio_file,
+            duration=duration
+        )
+
+        return Response({'message': 'Meditation liked and saved'}, status=201)
 
 
 
