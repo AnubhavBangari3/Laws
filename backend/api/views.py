@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer
-from . models import Profile,Blogs,Audiobook,Meditation
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -242,6 +242,38 @@ class LikeMeditationAPIView(APIView):
         serializer = MeditationSerializer(liked_meditations, many=True, context={"request": request})
         return Response(serializer.data, status=200)
 
+class MovieLikeAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get all liked movies by the logged-in user"""
+        user_profile = Profile.objects.get(username_id=request.user.id)
+        movies = Movie.objects.filter(user=user_profile)
+        serializer = MovieSerializer(movies, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Toggle like/unlike a movie"""
+        data = request.data
+        title = data.get("title")
+        user_profile = Profile.objects.get(username_id=request.user.id)
+        if not title:
+            return Response({"error": "Title is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing_movie = Movie.objects.filter(user=user_profile, title=title).first()
+
+        if existing_movie:
+            # If movie exists (already liked), unlike it
+            existing_movie.delete()
+            return Response({"message": "Movie unliked successfully"}, status=status.HTTP_200_OK)
+
+        # Otherwise, like it
+        serializer = MovieSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=user_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BlogListCreateAPIView(APIView):

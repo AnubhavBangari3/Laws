@@ -5,11 +5,13 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  Platform,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
 import Navbar from "../Navbar";
 import { apiReadAccessTOkenMovies } from "@env";
+import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -53,17 +55,91 @@ export default function TopRatedMovies() {
     fetchAllTopRatedMovies();
   }, []);
 
-  const toggleLike = (movieId) => {
-    setLikedMovies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(movieId)) {
-        newSet.delete(movieId);
+  useEffect(() => {
+  const fetchLikedMovies = async () => {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/movies/like/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const likedIds = new Set(data.map((movie) => movie.title)); // using title because that's your unique field
+        const idMap = new Set();
+
+        // Map from movie titles (from liked movies) to TMDB movie IDs
+        movies.forEach((movie) => {
+          if (likedIds.has(movie.title)) {
+            idMap.add(movie.id);
+          }
+        });
+
+        setLikedMovies(idMap);
       } else {
-        newSet.add(movieId);
+        console.error("Failed to fetch liked movies:", data);
       }
-      return newSet;
-    });
+    } catch (error) {
+      console.error("Error fetching liked movies:", error);
+    }
   };
+
+  if (movies.length > 0) {
+    fetchLikedMovies();
+  }
+}, [movies]);
+
+  console.log("movies:",movies)
+
+const toggleLike = async (movie) => {
+  const isLiked = likedMovies.has(movie.id);
+  const accessToken =
+          Platform.OS === "web"
+            ? localStorage.getItem("access_token")
+            : await SecureStore.getItemAsync("access_token");
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/movies/like/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+       Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        title: movie.title,
+        image: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+       
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setLikedMovies((prev) => {
+        const newSet = new Set(prev);
+        if (isLiked) {
+          newSet.delete(movie.id);
+        } else {
+          newSet.add(movie.id);
+        }
+        return newSet;
+      });
+    } else {
+      console.error("Error toggling like:", data);
+    }
+  } catch (err) {
+    console.error("Network error while toggling like:", err);
+  }
+};
 
   const chunkArray = (arr, size) => {
     return Array.from(
@@ -159,7 +235,7 @@ export default function TopRatedMovies() {
                     <Text style={styles.movieTitle} numberOfLines={1}>
                       {movie.title}
                     </Text>
-                    <TouchableOpacity onPress={() => toggleLike(movie.id)} style={styles.likeButton}>
+                    <TouchableOpacity onPress={() => toggleLike(movie)} style={styles.likeButton}>
                       <Ionicons
                         name={likedMovies.has(movie.id) ? "heart" : "heart-outline"}
                         size={16}

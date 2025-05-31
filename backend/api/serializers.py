@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation
+from . models import Profile,Blogs,Audiobook,Meditation,Movie
 
 
 class LoginSerializer(serializers.Serializer):
@@ -135,3 +135,9 @@ class MeditationSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['id', 'created_at']
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = ['id', 'user', 'title', 'image', 'created_at']
+        read_only_fields = ['user', 'created_at']

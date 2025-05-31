@@ -80,3 +80,16 @@ class Meditation(models.Model):
 
     def __str__(self):
         return self.title
+
+class Movie(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='liked_movies')
+    title = models.CharField(max_length=255)
+    image = models.URLField()
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'title')  # So a user can't like the same movie twice
+
+    def __str__(self):
+        return f"{self.title} liked by {self.user.username}"
