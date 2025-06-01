@@ -342,9 +342,26 @@ class BlogLikeStatusAPIView(APIView):
 from rest_framework import generics, permissions    
 
 #Start Rule-Based Matching
-class CreateRuleBasedProfileView(generics.CreateAPIView):
-    queryset = RuleBasedProfile.objects.all()
+class RuleBasedProfileRetrieveView(generics.RetrieveAPIView):
     serializer_class = RuleBasedProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        prof = Profile.objects.get(username_id=self.request.user.id)
+        return RuleBasedProfile.objects.get(profile=prof)
+    
+class CreateRuleBasedProfileView(generics.CreateAPIView):
+    serializer_class = RuleBasedProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+   
+
+    def perform_create(self, serializer):
+        # Set the user automatically
+        prof = Profile.objects.get(username_id=self.request.user.id)
+        if RuleBasedProfile.objects.filter(profile=prof).exists():
+            raise ValidationError("Rule-based profile already exists.")
+
+        serializer.save(profile=prof)
 
 #End Rule-Based Matching

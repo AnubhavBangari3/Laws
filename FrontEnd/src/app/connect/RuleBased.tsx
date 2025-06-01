@@ -1,7 +1,27 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { Picker } from "@react-native-picker/picker";
+
+const RELIGION_CHOICES = ["Hindu", "Muslim", "Christian", "Sikh", "Agnostic", "Other"];
+const EDUCATION_CHOICES = ["High School", "Bachelor's", "Master's", "PhD", "Other"];
+const JOB_CHOICES = ["Engineer", "Doctor", "Teacher", "Artist", "Business", "Actor", "Model", "Lawyer", "Other"];
 
 export default function RuleBased() {
+  const [loading, setLoading] = useState(true);
+  const [profileExists, setProfileExists] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  // Form states
   const [birthdate, setBirthdate] = useState("");
   const [height, setHeight] = useState("");
   const [religion, setReligion] = useState("");
@@ -13,16 +33,77 @@ export default function RuleBased() {
   const [interestsInput, setInterestsInput] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
 
+const fetchProfile = async () => {
+  const accessToken =
+    Platform.OS === "web"
+      ? localStorage.getItem("access_token")
+      : await SecureStore.getItemAsync("access_token");
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/rulebased/view/", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      console.log("data:", data);
+      setProfileExists(true);
+      setBirthdate(data.birthdate);
+      setHeight(data.height.toString());
+      setReligion(data.religion);
+      setEducation(data.education);
+      setJob(data.job);
+
+      let interestsData = [];
+      if (data.interests) {
+        if (typeof data.interests === "string") {
+          try {
+            interestsData = JSON.parse(data.interests);
+          } catch {
+            interestsData = [];
+          }
+        } else if (Array.isArray(data.interests)) {
+          interestsData = data.interests;
+        }
+      }
+      setInterests(interestsData);
+
+      if (data.religion === "Other") setCustomReligion(data.custom_religion || "");
+      if (data.education === "Other") setCustomEducation(data.custom_education || "");
+      if (data.job === "Other") setCustomJob(data.custom_job || "");
+    } else {
+      setProfileExists(false);
+    }
+  } catch (err) {
+    console.error("Error fetching profile", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  console.log("interests:",interests)
+
   const handleAddInterest = () => {
-    if (interestsInput.trim() && !interests.includes(interestsInput.trim())) {
-      setInterests([...interests, interestsInput.trim()]);
+    const trimmed = interestsInput.trim();
+    if (trimmed && !interests.includes(trimmed)) {
+      setInterests([...interests, trimmed]);
       setInterestsInput("");
     }
   };
 
   const handleSubmit = async () => {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
     const payload = {
-      profile: 1, // Replace with actual user profile ID
       birthdate,
       height: parseFloat(height),
       religion,
@@ -35,18 +116,22 @@ export default function RuleBased() {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/rule-based/", {
+      const res = await fetch("http://127.0.0.1:8000/rulebased/create/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
         Alert.alert("Success", "Rule-Based Profile Created!");
+        setEditMode(false);
+        setProfileExists(true);
       } else {
         const error = await res.json();
-        console.log("Error:", error);
-        Alert.alert("Error", "Something went wrong.");
+        Alert.alert("Error", JSON.stringify(error));
       }
     } catch (err) {
       console.error(err);
@@ -54,32 +139,119 @@ export default function RuleBased() {
     }
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#4B9CD3" />
+      </View>
+    );
+  }
+
+  if (profileExists && !editMode) {
+    return (
+      <View className="w-full px-4">
+        <Text className="text-xl font-bold mb-2">Your Rule-Based Profile</Text>
+        <Text>📅 Birthdate: {birthdate}</Text>
+        <Text>📏 Height: {height} ft</Text>
+        <Text>🛐 Religion: {religion === "Other" ? customReligion : religion}</Text>
+        <Text>🎓 Education: {education === "Other" ? customEducation : education}</Text>
+        <Text>💼 Job: {job === "Other" ? customJob : job}</Text>
+        {interests.map((interest, index) => (
+                    <TouchableOpacity
+                    key={index}
+                    // onPress={() => handleRemoveInterest(interest)}
+                    className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2"
+                    >
+                    <Text>{interest} ×</Text>
+                    </TouchableOpacity>
+                    ))}
+
+        <TouchableOpacity
+          onPress={() => setEditMode(true)}
+          className="bg-blue-500 mt-4 p-3 rounded"
+        >
+          <Text className="text-white text-center font-bold">Edit Profile</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Show Form if profile not exists or in edit mode
   return (
     <ScrollView className="w-full px-4 py-2">
-      <Text className="text-xl font-semibold mb-2">Rule-Based Matching Form</Text>
+      <Text className="text-xl font-semibold mb-2">
+        {editMode ? "Edit" : "Create"} Rule-Based Profile
+      </Text>
 
       <Text className="mt-2">Birthdate (YYYY-MM-DD)</Text>
-      <TextInput className="border p-2 rounded" value={birthdate} onChangeText={setBirthdate} />
+      <TextInput
+        className="border p-2 rounded"
+        value={birthdate}
+        onChangeText={setBirthdate}
+        placeholder="1990-01-01"
+      />
 
       <Text className="mt-2">Height (in ft)</Text>
-      <TextInput className="border p-2 rounded" value={height} onChangeText={setHeight} keyboardType="numeric" />
+      <TextInput
+        className="border p-2 rounded"
+        value={height}
+        onChangeText={setHeight}
+        keyboardType="numeric"
+        placeholder="5.8"
+      />
 
       <Text className="mt-2">Religion</Text>
-      <TextInput className="border p-2 rounded" value={religion} onChangeText={setReligion} placeholder="Hindu / Muslim / Other" />
+      <View className="border rounded">
+        <Picker selectedValue={religion} onValueChange={setReligion}>
+          <Picker.Item label="Select religion" value="" />
+          {RELIGION_CHOICES.map((r) => (
+            <Picker.Item key={r} label={r} value={r} />
+          ))}
+        </Picker>
+      </View>
       {religion === "Other" && (
-        <TextInput className="border p-2 rounded mt-1" value={customReligion} onChangeText={setCustomReligion} placeholder="Enter custom religion" />
+        <TextInput
+          className="border p-2 rounded mt-1"
+          value={customReligion}
+          onChangeText={setCustomReligion}
+          placeholder="Enter custom religion"
+        />
       )}
 
       <Text className="mt-2">Education</Text>
-      <TextInput className="border p-2 rounded" value={education} onChangeText={setEducation} placeholder="Bachelor's / PhD / Other" />
+      <View className="border rounded">
+        <Picker selectedValue={education} onValueChange={setEducation}>
+          <Picker.Item label="Select education" value="" />
+          {EDUCATION_CHOICES.map((e) => (
+            <Picker.Item key={e} label={e} value={e} />
+          ))}
+        </Picker>
+      </View>
       {education === "Other" && (
-        <TextInput className="border p-2 rounded mt-1" value={customEducation} onChangeText={setCustomEducation} placeholder="Enter custom education" />
+        <TextInput
+          className="border p-2 rounded mt-1"
+          value={customEducation}
+          onChangeText={setCustomEducation}
+          placeholder="Enter custom education"
+        />
       )}
 
       <Text className="mt-2">Job</Text>
-      <TextInput className="border p-2 rounded" value={job} onChangeText={setJob} placeholder="Engineer / Artist / Other" />
+      <View className="border rounded">
+        <Picker selectedValue={job} onValueChange={setJob}>
+          <Picker.Item label="Select job" value="" />
+          {JOB_CHOICES.map((j) => (
+            <Picker.Item key={j} label={j} value={j} />
+          ))}
+        </Picker>
+      </View>
       {job === "Other" && (
-        <TextInput className="border p-2 rounded mt-1" value={customJob} onChangeText={setCustomJob} placeholder="Enter custom job" />
+        <TextInput
+          className="border p-2 rounded mt-1"
+          value={customJob}
+          onChangeText={setCustomJob}
+          placeholder="Enter custom job"
+        />
       )}
 
       <Text className="mt-2">Interests</Text>
@@ -94,6 +266,7 @@ export default function RuleBased() {
           <Text className="text-white">Add</Text>
         </TouchableOpacity>
       </View>
+
       <View className="flex-row flex-wrap mt-1">
         {interests.map((interest, index) => (
           <Text key={index} className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2">

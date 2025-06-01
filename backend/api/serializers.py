@@ -172,6 +172,7 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
             'interests',         # Used for writing plain names
             'interest_objects',  # Used for reading actual Interest objects
         ]
+        read_only_fields = ['profile'] 
 
     def create(self, validated_data):
         interest_names = validated_data.pop('interests', [])
