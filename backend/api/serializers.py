@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest
 
 
 class LoginSerializer(serializers.Serializer):
@@ -141,3 +141,64 @@ class MovieSerializer(serializers.ModelSerializer):
         model = Movie
         fields = ['id', 'user', 'title', 'image', 'created_at']
         read_only_fields = ['user', 'created_at']
+
+#Start Rule-Based Matching
+class InterestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Interest
+        fields = ['id', 'name']
+
+
+class RuleBasedProfileSerializer(serializers.ModelSerializer):
+    # Handle many-to-many with Interests
+    interests = serializers.ListField(
+        child=serializers.CharField(), write_only=True
+    )
+    interest_objects = InterestSerializer(many=True, read_only=True, source="interests")
+
+    class Meta:
+        model = RuleBasedProfile
+        fields = [
+            'id',
+            'profile',
+            'birthdate',
+            'height',
+            'religion',
+            'custom_religion',
+            'education',
+            'custom_education',
+            'job',
+            'custom_job',
+            'interests',         # Used for writing plain names
+            'interest_objects',  # Used for reading actual Interest objects
+        ]
+
+    def create(self, validated_data):
+        interest_names = validated_data.pop('interests', [])
+        instance = RuleBasedProfile.objects.create(**validated_data)
+
+        # Handle many-to-many interest creation or linking
+        for name in interest_names:
+            interest, created = Interest.objects.get_or_create(name=name)
+            instance.interests.add(interest)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        interest_names = validated_data.pop('interests', None)
+
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update interests
+        if interest_names is not None:
+            instance.interests.clear()
+            for name in interest_names:
+                interest, created = Interest.objects.get_or_create(name=name)
+                instance.interests.add(interest)
+
+        return instance
+    
+#End Rule-Based Matching

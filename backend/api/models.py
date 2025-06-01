@@ -43,6 +43,72 @@ class Profile(models.Model):
     def __str__(self):
         return str(self.username.username)
     
+'''
+Start Rule-Based Matching
+'''
+RELIGION_CHOICES = [
+    ("Hindu", "Hindu"),
+    ("Muslim", "Muslim"),
+    ("Christian", "Christian"),
+    ("Sikh", "Sikh"),
+    ("Agnostic", "Agnostic"),
+    ("Other", "Other"),
+]
+
+EDUCATION_CHOICES = [
+    ("High School", "High School"),
+    ("Bachelor's", "Bachelor's"),
+    ("Master's", "Master's"),
+    ("PhD", "PhD"),
+    ("Other", "Other"),
+]
+
+JOB_CHOICES = [
+    ("Engineer", "Engineer"),
+    ("Doctor", "Doctor"),
+    ("Teacher", "Teacher"),
+    ("Artist", "Artist"),
+    ("Business", "Business"),
+    ("Actor", "Actor"),
+    ("Model", "Model"),
+    ("Lawyer", "Lawyer"),
+    ("Other", "Other"),
+]
+
+
+# Separate model for interests to allow dropdown + custom addition
+class Interest(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class RuleBasedProfile(models.Model):
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="rule_based")
+    
+    birthdate = models.DateField()
+    height = models.FloatField(help_text="Height in ft")
+
+    religion = models.CharField(max_length=100, choices=RELIGION_CHOICES)
+    custom_religion = models.CharField(max_length=100, blank=True, null=True, help_text="If religion is 'Other'")
+
+    education = models.CharField(max_length=100, choices=EDUCATION_CHOICES)
+    custom_education = models.CharField(max_length=100, blank=True, null=True)
+
+    job = models.CharField(max_length=100, choices=JOB_CHOICES)
+    custom_job = models.CharField(max_length=100, blank=True, null=True)
+
+    # Multiple interests: gym, yoga, meditation, etc.
+    interests = models.ManyToManyField(Interest, blank=True)
+
+    def __str__(self):
+        return f"RuleBasedProfile of {self.profile.username.username}"
+
+
+'''
+End Rule-Based Matching
+'''
+    
 class Blogs(models.Model):
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="post_author")
     content = models.TextField()

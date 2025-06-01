@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -339,3 +339,12 @@ class BlogLikeStatusAPIView(APIView):
             'liked': liked,
             'total_likes': blog.likes.count()
         }, status=status.HTTP_200_OK)
+from rest_framework import generics, permissions    
+
+#Start Rule-Based Matching
+class CreateRuleBasedProfileView(generics.CreateAPIView):
+    queryset = RuleBasedProfile.objects.all()
+    serializer_class = RuleBasedProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+#End Rule-Based Matching
