@@ -56,8 +56,13 @@ const fetchProfile = async () => {
       setEducation(data.education);
       setJob(data.job);
 
+      // Handle interests data properly
       let interestsData = [];
-      if (data.interests) {
+      if (data.interest_objects && Array.isArray(data.interest_objects)) {
+        // Extract just the names if interest_objects is an array of objects
+        interestsData = data.interest_objects.map(interest => interest.name || interest);
+      } else if (data.interests) {
+        // Fallback to interests if interest_objects doesn't exist
         if (typeof data.interests === "string") {
           try {
             interestsData = JSON.parse(data.interests);
@@ -82,7 +87,6 @@ const fetchProfile = async () => {
     setLoading(false);
   }
 };
-
   useEffect(() => {
     fetchProfile();
   }, []);
