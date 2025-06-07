@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView
 from rest_framework.routers import DefaultRouter
 
 
@@ -23,4 +23,6 @@ urlpatterns=[
    path('movies/like/', MovieLikeAPIView.as_view(), name='movie-like'),
     path('rulebased/create/', CreateRuleBasedProfileView.as_view(), name='create-rulebased-profile'),
     path("rulebased/view/", RuleBasedProfileRetrieveView.as_view()),
+    path("rulebased/update/",UpdateRuleBasedProfileView.as_view()),
+    path("rulebased/delete/<int:interest_id>/",RuleBasedProfileRemoveInterestView.as_view()),
     ]

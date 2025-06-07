@@ -364,4 +364,38 @@ class CreateRuleBasedProfileView(generics.CreateAPIView):
 
         serializer.save(profile=prof)
 
+class UpdateRuleBasedProfileView(generics.UpdateAPIView):
+    serializer_class = RuleBasedProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        prof = Profile.objects.get(username_id=self.request.user.id)
+        try:
+            return RuleBasedProfile.objects.get(profile=prof)
+        except RuleBasedProfile.DoesNotExist:
+            raise ValidationError("Rule-based profile does not exist. Please create it first.")
+        
+class RuleBasedProfileRemoveInterestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, interest_id):
+        # 1. Get the current user's Profile
+        prof = Profile.objects.get(username_id=request.user.id)
+        # 2. Get or error if RuleBasedProfile does not exist
+        try:
+            rule_profile = RuleBasedProfile.objects.get(profile=prof)
+        except RuleBasedProfile.DoesNotExist:
+            raise ValidationError("Rule-based profile does not exist. Please create it first.")
+
+        # 3. Find the interest in this profile
+        try:
+            interest = rule_profile.interests.get(id=interest_id)
+        except Interest.DoesNotExist:
+            raise ValidationError("Interest not found in this profile.")
+
+        # 4. Remove the interest from the profile (many-to-many remove)
+        rule_profile.interests.remove(interest)
+        # Return HTTP 204 No Content on success
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 #End Rule-Based Matching

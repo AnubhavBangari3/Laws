@@ -21,7 +21,6 @@ export default function RuleBased() {
   const [profileExists, setProfileExists] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // Form states
   const [birthdate, setBirthdate] = useState("");
   const [height, setHeight] = useState("");
   const [religion, setReligion] = useState("");
@@ -31,72 +30,59 @@ export default function RuleBased() {
   const [job, setJob] = useState("");
   const [customJob, setCustomJob] = useState("");
   const [interestsInput, setInterestsInput] = useState("");
-  const [interests, setInterests] = useState<string[]>([]);
+  const [interests, setInterests] = useState<{ id: number; name: string }[]>([]);
 
-const fetchProfile = async () => {
-  const accessToken =
-    Platform.OS === "web"
-      ? localStorage.getItem("access_token")
-      : await SecureStore.getItemAsync("access_token");
+  const fetchProfile = async () => {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/rulebased/view/", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    try {
+      const res = await fetch("http://127.0.0.1:8000/rulebased/view/", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      console.log("data:", data);
-      setProfileExists(true);
-      setBirthdate(data.birthdate);
-      setHeight(data.height.toString());
-      setReligion(data.religion);
-      setEducation(data.education);
-      setJob(data.job);
+      if (res.ok) {
+        const data = await res.json();
+        setProfileExists(true);
+        setBirthdate(data.birthdate);
+        setHeight(data.height.toString());
+        setReligion(data.religion);
+        setEducation(data.education);
+        setJob(data.job);
 
-      // Handle interests data properly
-      let interestsData = [];
-      if (data.interest_objects && Array.isArray(data.interest_objects)) {
-        // Extract just the names if interest_objects is an array of objects
-        interestsData = data.interest_objects.map(interest => interest.name || interest);
-      } else if (data.interests) {
-        // Fallback to interests if interest_objects doesn't exist
-        if (typeof data.interests === "string") {
-          try {
-            interestsData = JSON.parse(data.interests);
-          } catch {
-            interestsData = [];
-          }
+        if (data.religion === "Other") setCustomReligion(data.custom_religion || "");
+        if (data.education === "Other") setCustomEducation(data.custom_education || "");
+        if (data.job === "Other") setCustomJob(data.custom_job || "");
+
+        if (Array.isArray(data.interest_objects)) {
+          setInterests(data.interest_objects);
         } else if (Array.isArray(data.interests)) {
-          interestsData = data.interests;
+          setInterests(data.interests.map((name, index) => ({ id: index, name })));
+        } else {
+          setInterests([]);
         }
+      } else {
+        setProfileExists(false);
       }
-      setInterests(interestsData);
-
-      if (data.religion === "Other") setCustomReligion(data.custom_religion || "");
-      if (data.education === "Other") setCustomEducation(data.custom_education || "");
-      if (data.job === "Other") setCustomJob(data.custom_job || "");
-    } else {
-      setProfileExists(false);
+    } catch (err) {
+      console.error("Error fetching profile", err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Error fetching profile", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  console.log("interests:",interests)
-
   const handleAddInterest = () => {
     const trimmed = interestsInput.trim();
-    if (trimmed && !interests.includes(trimmed)) {
-      setInterests([...interests, trimmed]);
+    if (trimmed && !interests.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())) {
+      setInterests([...interests, { id: Date.now(), name: trimmed }]);
       setInterestsInput("");
     }
   };
@@ -116,12 +102,18 @@ const fetchProfile = async () => {
       custom_education: education === "Other" ? customEducation : null,
       job,
       custom_job: job === "Other" ? customJob : null,
-      interests,
+      interests: interests.map((i) => i.name), // convert to string array
     };
 
+    const url = profileExists && editMode
+      ? "http://127.0.0.1:8000/rulebased/update/"
+      : "http://127.0.0.1:8000/rulebased/create/";
+
+    const method = profileExists && editMode ? "PUT" : "POST";
+
     try {
-      const res = await fetch("http://127.0.0.1:8000/rulebased/create/", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -130,7 +122,7 @@ const fetchProfile = async () => {
       });
 
       if (res.ok) {
-        Alert.alert("Success", "Rule-Based Profile Created!");
+        Alert.alert("Success", `Rule-Based Profile ${editMode ? "Updated" : "Created"}!`);
         setEditMode(false);
         setProfileExists(true);
       } else {
@@ -140,6 +132,36 @@ const fetchProfile = async () => {
     } catch (err) {
       console.error(err);
       Alert.alert("Error", "Network error.");
+    }
+  };
+
+  const handleRemoveInterest = async (interestId: number) => {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    try {
+      const deleteRes = await fetch(
+        `http://127.0.0.1:8000/rulebased/delete/${interestId}/`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (deleteRes.ok) {
+        setInterests(interests.filter((i) => i.id !== interestId));
+      } else {
+        const errorData = await deleteRes.json();
+        console.error("Delete failed:", errorData);
+        Alert.alert("Error", "Failed to remove interest.");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Network error while removing interest.");
     }
   };
 
@@ -160,15 +182,17 @@ const fetchProfile = async () => {
         <Text>🛐 Religion: {religion === "Other" ? customReligion : religion}</Text>
         <Text>🎓 Education: {education === "Other" ? customEducation : education}</Text>
         <Text>💼 Job: {job === "Other" ? customJob : job}</Text>
-        {interests.map((interest, index) => (
-                    <TouchableOpacity
-                    key={index}
-                    // onPress={() => handleRemoveInterest(interest)}
-                    className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2"
-                    >
-                    <Text>{interest} ×</Text>
-                    </TouchableOpacity>
-                    ))}
+        <View className="flex-row flex-wrap mt-2">
+          {interests.map((interest) => (
+            <TouchableOpacity
+              key={interest.id}
+              onPress={() => handleRemoveInterest(interest.id)}
+              className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2"
+            >
+              <Text>{interest.name} ×</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <TouchableOpacity
           onPress={() => setEditMode(true)}
@@ -180,7 +204,6 @@ const fetchProfile = async () => {
     );
   }
 
-  // Show Form if profile not exists or in edit mode
   return (
     <ScrollView className="w-full px-4 py-2">
       <Text className="text-xl font-semibold mb-2">
@@ -271,11 +294,15 @@ const fetchProfile = async () => {
         </TouchableOpacity>
       </View>
 
-      <View className="flex-row flex-wrap mt-1">
-        {interests.map((interest, index) => (
-          <Text key={index} className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2">
-            {interest}
-          </Text>
+      <View className="flex-row flex-wrap mt-2">
+        {interests.map((interest) => (
+          <TouchableOpacity
+            key={interest.id}
+            onPress={() => handleRemoveInterest(interest.id)}
+            className="bg-gray-200 rounded px-2 py-1 mr-2 mb-2"
+          >
+            <Text>{interest.name} ×</Text>
+          </TouchableOpacity>
         ))}
       </View>
 
