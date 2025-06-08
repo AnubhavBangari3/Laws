@@ -8,6 +8,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { Picker } from "@react-native-picker/picker";
@@ -24,8 +25,8 @@ export default function RuleBased() {
   const [editMode, setEditMode] = useState(false);
 
   const router = useRouter();
-  
 
+  const [pp,setPP] =useState("");
   const [birthdate, setBirthdate] = useState("");
   const [height, setHeight] = useState("");
   const [religion, setReligion] = useState("");
@@ -49,10 +50,12 @@ export default function RuleBased() {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-
+      
       if (res.ok) {
         const data = await res.json();
+        //console.log("data m:",data);
         setProfileExists(true);
+        setPP(data.pp);
         setBirthdate(data.birthdate);
         setHeight(data.height.toString());
         setReligion(data.religion);
@@ -83,6 +86,8 @@ export default function RuleBased() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+
 
   const handleAddInterest = () => {
     const trimmed = interestsInput.trim();
@@ -182,6 +187,11 @@ export default function RuleBased() {
     return (
       <View className="w-full px-4">
         <Text className="text-xl font-bold mb-2">Your Rule-Based Profile</Text>
+        <Image
+                      source={{ uri: `${pp}` }}
+                      className="w-32 h-32 rounded-full border-4 border-yellow-400"
+                      resizeMode="cover"
+                    />
         <Text>📅 Birthdate: {birthdate}</Text>
         <Text>📏 Height: {height} ft</Text>
         <Text>🛐 Religion: {religion === "Other" ? customReligion : religion}</Text>

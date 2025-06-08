@@ -397,5 +397,14 @@ class RuleBasedProfileRemoveInterestView(APIView):
         rule_profile.interests.remove(interest)
         # Return HTTP 204 No Content on success
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class RuleBasedProfileListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_user = request.user
+        queryset = RuleBasedProfile.objects.exclude(profile__username=current_user)
+        serializer = RuleBasedProfileSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
 #End Rule-Based Matching

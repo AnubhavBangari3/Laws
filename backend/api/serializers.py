@@ -155,6 +155,8 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
         child=serializers.CharField(), write_only=True
     )
     interest_objects = InterestSerializer(many=True, read_only=True, source="interests")
+    pp = serializers.ImageField(source="profile.pp")
+    profile_username = serializers.SerializerMethodField()
 
     class Meta:
         model = RuleBasedProfile
@@ -168,11 +170,15 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
             'education',
             'custom_education',
             'job',
+            'profile_username',
             'custom_job',
             'interests',         # Used for writing plain names
             'interest_objects',  # Used for reading actual Interest objects
+            'pp',
         ]
         read_only_fields = ['profile'] 
+    def get_profile_username(self, obj):
+        return obj.profile.username.username 
 
     def create(self, validated_data):
         interest_names = validated_data.pop('interests', [])
