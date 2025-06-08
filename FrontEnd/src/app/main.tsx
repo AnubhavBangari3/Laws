@@ -277,15 +277,32 @@ export default function Main() {
           ) : (
             <>
               {/* Normal View */}
-              <Text className="text-2xl font-bold mt-4">{profile.profile_name}</Text>
+              <Text className="text-2xl font-bold mt-4 my-2">{profile.profile_name}</Text>
               <Text className="text-gray-500">{profile.email}</Text>
 
-              <Pressable
-                onPress={() => setEditing(true)}
-                className="mt-4 bg-yellow-400 px-6 py-2 rounded-full"
-              >
-                <Text className="text-white font-bold">Edit Profile</Text>
-              </Pressable>
+              <View className="flex-row justify-center items-center gap-2 my-4">
+                  <Pressable
+                    onPress={() => router.push("/connect")}
+                    className="bg-yellow-400 px-4 py-3 rounded-full shadow-md"
+                  >
+                    <Text className="text-white font-bold text-center">Connect</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => setEditing(true)}
+                    className="bg-yellow-400 px-4 py-3 rounded-full shadow-md"
+                  >
+                    <Text className="text-white font-bold text-center">Edit</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => router.push("/")}
+                    className="bg-yellow-400 px-4 py-3 rounded-full shadow-md"
+                  >
+                    <Text className="text-white font-bold text-center">Vision</Text>
+                  </Pressable>
+              </View>
+
             </>
           )}
         </View>
