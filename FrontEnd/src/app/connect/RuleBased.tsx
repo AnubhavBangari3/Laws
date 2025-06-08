@@ -12,6 +12,8 @@ import {
 import * as SecureStore from "expo-secure-store";
 import { Picker } from "@react-native-picker/picker";
 
+import { useRouter } from "expo-router";
+
 const RELIGION_CHOICES = ["Hindu", "Muslim", "Christian", "Sikh", "Agnostic", "Other"];
 const EDUCATION_CHOICES = ["High School", "Bachelor's", "Master's", "PhD", "Other"];
 const JOB_CHOICES = ["Engineer", "Doctor", "Teacher", "Artist", "Business", "Actor", "Model", "Lawyer", "Other"];
@@ -20,6 +22,9 @@ export default function RuleBased() {
   const [loading, setLoading] = useState(true);
   const [profileExists, setProfileExists] = useState(false);
   const [editMode, setEditMode] = useState(false);
+
+  const router = useRouter();
+  
 
   const [birthdate, setBirthdate] = useState("");
   const [height, setHeight] = useState("");
@@ -200,6 +205,18 @@ export default function RuleBased() {
         >
           <Text className="text-white text-center font-bold">Edit Profile</Text>
         </TouchableOpacity>
+
+
+        <TouchableOpacity
+          onPress={() => router.push("/connect/matchmaking")} 
+          className="bg-pink-500 mt-6 mx-2 p-4 rounded-2xl shadow-lg shadow-pink-300"
+        >
+          <Text className="text-white text-center text-lg font-extrabold tracking-wide">
+            💖 Find Matches
+          </Text>
+        </TouchableOpacity>
+
+
       </View>
     );
   }
