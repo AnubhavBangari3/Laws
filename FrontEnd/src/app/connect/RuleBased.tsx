@@ -135,6 +135,7 @@ export default function RuleBased() {
         Alert.alert("Success", `Rule-Based Profile ${editMode ? "Updated" : "Created"}!`);
         setEditMode(false);
         setProfileExists(true);
+        fetchProfile();
       } else {
         const error = await res.json();
         Alert.alert("Error", JSON.stringify(error));

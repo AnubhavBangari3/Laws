@@ -340,29 +340,42 @@ class BlogLikeStatusAPIView(APIView):
             'total_likes': blog.likes.count()
         }, status=status.HTTP_200_OK)
 from rest_framework import generics, permissions    
-
+from rest_framework.exceptions import NotFound
 #Start Rule-Based Matching
 class RuleBasedProfileRetrieveView(generics.RetrieveAPIView):
     serializer_class = RuleBasedProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        prof = Profile.objects.get(username_id=self.request.user.id)
-        return RuleBasedProfile.objects.get(profile=prof)
+        try:
+            prof = Profile.objects.get(username_id=self.request.user.id)
+        except Profile.DoesNotExist:
+            raise NotFound(detail="Profile not found.")
+
+        try:
+            return RuleBasedProfile.objects.get(profile=prof)
+        except RuleBasedProfile.DoesNotExist:
+            raise NotFound(detail="Rule-based profile not found.")
     
 class CreateRuleBasedProfileView(generics.CreateAPIView):
     serializer_class = RuleBasedProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-   
-
-    def perform_create(self, serializer):
-        # Set the user automatically
+    def create(self, request, *args, **kwargs):
         prof = Profile.objects.get(username_id=self.request.user.id)
+        #print("prof in create:", prof)
+
         if RuleBasedProfile.objects.filter(profile=prof).exists():
             raise ValidationError("Rule-based profile already exists.")
 
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            #print("Serializer Errors:", serializer.errors)  # <== Add this line
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        #print("Payload Received:", request.data)
         serializer.save(profile=prof)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class UpdateRuleBasedProfileView(generics.UpdateAPIView):
     serializer_class = RuleBasedProfileSerializer

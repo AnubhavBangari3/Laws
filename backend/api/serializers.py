@@ -155,7 +155,7 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
         child=serializers.CharField(), write_only=True
     )
     interest_objects = InterestSerializer(many=True, read_only=True, source="interests")
-    pp = serializers.ImageField(source="profile.pp")
+    pp = serializers.ImageField(source="profile.pp", read_only=True)
     profile_username = serializers.SerializerMethodField()
 
     class Meta:
