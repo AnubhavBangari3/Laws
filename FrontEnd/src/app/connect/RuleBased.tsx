@@ -84,6 +84,7 @@ export default function RuleBased() {
   };
 
   useEffect(() => {
+    
     fetchProfile();
   }, []);
 

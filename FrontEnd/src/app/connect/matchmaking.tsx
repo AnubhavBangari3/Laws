@@ -97,6 +97,17 @@ export default function Matchmaking() {
                     💼 {match.job} • 📅 {match.birthdate}
                   </Text>
                 </View>
+                 {/* 👇 Show interests here */}
+                <View className="flex-row flex-wrap mt-1">
+                  {match.interest_objects?.map((interest) => (
+                    <Text
+                      key={interest.id}
+                      className="text-xs bg-pink-100 text-pink-800 px-2 py-1 mr-2 mb-2 rounded-full"
+                    >
+                      {interest.name}
+                    </Text>
+                  ))}
+                </View>
                 <TouchableOpacity
                   className="bg-pink-500 px-3 py-1 rounded-xl"
                   onPress={() => Alert.alert("Connect Request Sent!")}
