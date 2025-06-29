@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -420,4 +420,38 @@ class RuleBasedProfileListView(APIView):
         serializer = RuleBasedProfileSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
+
+class MatchPreferenceAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        profile = Profile.objects.get(username_id=request.user.id)
+
+        try:
+            # Check if preferences already exist
+            instance = MatchPreference.objects.get(user=profile)
+
+            # If data is same, reject duplicate update
+            if request.data == MatchPreferenceSerializer(instance).data:
+                return Response(
+                    {"detail": "Preferences already submitted."},
+                    status=status.HTTP_409_CONFLICT
+                )
+
+            # Otherwise, update existing preferences
+            serializer = MatchPreferenceSerializer(instance, data=request.data)
+        except MatchPreference.DoesNotExist:
+            # New entry: but double-check no duplicate
+            if MatchPreference.objects.filter(user=profile).exists():
+                return Response(
+                    {"detail": "Preferences already exist."},
+                    status=status.HTTP_409_CONFLICT
+                )
+            serializer = MatchPreferenceSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(user=profile)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 #End Rule-Based Matching

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile
+from .models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference
 # Register your models here.
 
 admin.site.register(Profile)
@@ -9,3 +9,4 @@ admin.site.register(Meditation)
 admin.site.register(Movie)
 admin.site.register(Interest)
 admin.site.register(RuleBasedProfile)
+admin.site.register(MatchPreference)

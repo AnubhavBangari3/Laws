@@ -105,6 +105,25 @@ class RuleBasedProfile(models.Model):
         return f"RuleBasedProfile of {self.profile.username.username}"
 
 
+class MatchPreference(models.Model):
+    user = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="match_preference")
+
+    q1_alcohol = models.CharField(max_length=30)
+    q2_smoke = models.CharField(max_length=30)
+    q3_children = models.CharField(max_length=30)
+    q4_long_distance = models.CharField(max_length=30)
+    q5_religion = models.CharField(max_length=30)
+    q6_living_together = models.CharField(max_length=30)
+    q7_exercise_partner = models.CharField(max_length=30)
+    q8_community = models.CharField(max_length=30)
+    q9_monogamy = models.CharField(max_length=30)
+    q10_pets = models.CharField(max_length=30)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Match Preferences"
+
 '''
 End Rule-Based Matching
 '''

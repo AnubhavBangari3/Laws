@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference
 
 
 class LoginSerializer(serializers.Serializer):
@@ -207,5 +207,23 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
                 instance.interests.add(interest)
 
         return instance
-    
+class MatchPreferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MatchPreference
+        fields = [
+            "id",
+            "user",  # or "user_id" depending on your frontend
+            "q1_alcohol",
+            "q2_smoke",
+            "q3_children",
+            "q4_long_distance",
+            "q5_religion",
+            "q6_living_together",
+            "q7_exercise_partner",
+            "q8_community",
+            "q9_monogamy",
+            "q10_pets",
+            "updated_at",
+        ]
+        read_only_fields = ["updated_at"] 
 #End Rule-Based Matching
