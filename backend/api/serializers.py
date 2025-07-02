@@ -225,5 +225,5 @@ class MatchPreferenceSerializer(serializers.ModelSerializer):
             "q10_pets",
             "updated_at",
         ]
-        read_only_fields = ["updated_at"] 
+        read_only_fields = ["updated_at","user"] 
 #End Rule-Based Matching
