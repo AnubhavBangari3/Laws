@@ -28,61 +28,69 @@ export default function MatchPreferencesForm() {
     }));
   };
 
-    const handleSubmit = async () => {
-    if (Object.keys(answers).length < 10) {
-      Alert.alert("Incomplete", "Please answer all questions.");
+ const handleSubmit = async () => {
+  if (Object.keys(answers).length < 10) {
+    Alert.alert("Incomplete", "Please answer all questions.");
+    return;
+  }
+
+  const payload = {
+    q1_alcohol: answers[0],
+    q2_smoke: answers[1],
+    q3_children: answers[2],
+    q4_long_distance: answers[3],
+    q5_religion: answers[4],
+    q6_living_together: answers[5],
+    q7_exercise_partner: answers[6],
+    q8_community: answers[7],
+    q9_monogamy: answers[8],
+    q10_pets: answers[9],
+  };
+
+  try {
+    const accessToken =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    if (!accessToken) {
+      Alert.alert("Error", "You must be logged in to submit preferences.");
       return;
     }
 
-    const payload = {
-      q1_alcohol: answers[0],
-      q2_smoke: answers[1],
-      q3_children: answers[2],
-      q4_long_distance: answers[3],
-      q5_religion: answers[4],
-      q6_living_together: answers[5],
-      q7_exercise_partner: answers[6],
-      q8_community: answers[7],
-      q9_monogamy: answers[8],
-      q10_pets: answers[9],
-    };
+    const response = await fetch("http://127.0.0.1:8000/match-preferences/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
- try {
-      const accessToken =
-        Platform.OS === "web"
-          ? localStorage.getItem("access_token")
-          : await SecureStore.getItemAsync("access_token");
-
-      if (!accessToken) {
-        Alert.alert("Error", "You must be logged in to submit preferences.");
-        return;
-      }
-
-      const response = await fetch("http://127.0.0.1:8000/match-preferences/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.status === 200) {
-        Alert.alert("✅ Saved", "Your match preferences were submitted!");
+    if (response.status === 200) {
+      Alert.alert("✅ Saved", "Your match preferences were submitted!");
       
-      } else if (response.status === 409) {
-        const resJson = await response.json();
-        Alert.alert("Already Submitted", resJson.detail);
-      } else {
-        const resJson = await response.json();
-        console.error("Error:", resJson);
-        Alert.alert("Submission Failed", "Please try again later.");
+      // 🔁 Refresh the page (web only)
+      if (Platform.OS === "web") {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500); // slight delay to allow user to see the alert
       }
-    } catch (error) {
-      console.error("Request Error:", error);
-      Alert.alert("Network Error", "Please check your connection.");
+
+    } else if (response.status === 409) {
+      const resJson = await response.json();
+      Alert.alert("Already Submitted", resJson.detail);
+    } else {
+      const resJson = await response.json();
+      console.error("Error:", resJson);
+      Alert.alert("Submission Failed", "Please try again later.");
     }
-  };
+  } catch (error) {
+    console.error("Request Error:", error);
+    Alert.alert("Network Error", "Please check your connection.");
+  }
+};
+
 
   return (
     <ScrollView className="p-4 bg-white">
