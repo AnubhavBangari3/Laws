@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from "react-native";
-
 import * as SecureStore from "expo-secure-store"; // for native
 
 const matchQuestions = [
@@ -21,6 +20,53 @@ const options = ["Yes", "No", "Prefer not to say"];
 export default function MatchPreferencesForm() {
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
 
+  // ✅ Fetch existing preferences on mount
+  useEffect(() => {
+    fetchPreferences();
+  }, []);
+
+  const fetchPreferences = async () => {
+    try {
+      const token =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      const response = await fetch("http://127.0.0.1:8000/match-preferences/", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+
+        // ✅ Map response data to answers state
+        const prefilledAnswers: { [key: number]: string } = {
+          0: data.q1_alcohol,
+          1: data.q2_smoke,
+          2: data.q3_children,
+          3: data.q4_long_distance,
+          4: data.q5_religion,
+          5: data.q6_living_together,
+          6: data.q7_exercise_partner,
+          7: data.q8_community,
+          8: data.q9_monogamy,
+          9: data.q10_pets,
+        };
+
+        setAnswers(prefilledAnswers);
+      } else if (response.status === 404) {
+        console.log("No previous preferences found.");
+      } else {
+        console.error("Unexpected error loading preferences.");
+      }
+    } catch (err) {
+      console.error("Error fetching match preferences:", err);
+    }
+  };
+
   const handleSelect = (index: number, answer: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -28,69 +74,67 @@ export default function MatchPreferencesForm() {
     }));
   };
 
- const handleSubmit = async () => {
-  if (Object.keys(answers).length < 10) {
-    Alert.alert("Incomplete", "Please answer all questions.");
-    return;
-  }
-
-  const payload = {
-    q1_alcohol: answers[0],
-    q2_smoke: answers[1],
-    q3_children: answers[2],
-    q4_long_distance: answers[3],
-    q5_religion: answers[4],
-    q6_living_together: answers[5],
-    q7_exercise_partner: answers[6],
-    q8_community: answers[7],
-    q9_monogamy: answers[8],
-    q10_pets: answers[9],
-  };
-
-  try {
-    const accessToken =
-      Platform.OS === "web"
-        ? localStorage.getItem("access_token")
-        : await SecureStore.getItemAsync("access_token");
-
-    if (!accessToken) {
-      Alert.alert("Error", "You must be logged in to submit preferences.");
+  const handleSubmit = async () => {
+    if (Object.keys(answers).length < 10) {
+      Alert.alert("Incomplete", "Please answer all questions.");
       return;
     }
 
-    const response = await fetch("http://127.0.0.1:8000/match-preferences/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const payload = {
+      q1_alcohol: answers[0],
+      q2_smoke: answers[1],
+      q3_children: answers[2],
+      q4_long_distance: answers[3],
+      q5_religion: answers[4],
+      q6_living_together: answers[5],
+      q7_exercise_partner: answers[6],
+      q8_community: answers[7],
+      q9_monogamy: answers[8],
+      q10_pets: answers[9],
+    };
 
-    if (response.status === 200) {
-      Alert.alert("✅ Saved", "Your match preferences were submitted!");
-      
-      // 🔁 Refresh the page (web only)
-      if (Platform.OS === "web") {
-        setTimeout(() => {
-          window.location.reload();
-        }, 500); // slight delay to allow user to see the alert
+    try {
+      const accessToken =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      if (!accessToken) {
+        Alert.alert("Error", "You must be logged in to submit preferences.");
+        return;
       }
 
-    } else if (response.status === 409) {
-      const resJson = await response.json();
-      Alert.alert("Already Submitted", resJson.detail);
-    } else {
-      const resJson = await response.json();
-      console.error("Error:", resJson);
-      Alert.alert("Submission Failed", "Please try again later.");
-    }
-  } catch (error) {
-    console.error("Request Error:", error);
-    Alert.alert("Network Error", "Please check your connection.");
-  }
-};
+      const response = await fetch("http://127.0.0.1:8000/match-preferences/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
+      if (response.status === 200) {
+        Alert.alert("✅ Saved", "Your match preferences were submitted!");
+
+        // Refresh for web after submission
+        if (Platform.OS === "web") {
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }
+      } else if (response.status === 409) {
+        const resJson = await response.json();
+        Alert.alert("Already Submitted", resJson.detail);
+      } else {
+        const resJson = await response.json();
+        console.error("Error:", resJson);
+        Alert.alert("Submission Failed", "Please try again later.");
+      }
+    } catch (error) {
+      console.error("Request Error:", error);
+      Alert.alert("Network Error", "Please check your connection.");
+    }
+  };
 
   return (
     <ScrollView className="p-4 bg-white">

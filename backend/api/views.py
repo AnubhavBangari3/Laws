@@ -424,6 +424,23 @@ class RuleBasedProfileListView(APIView):
 class MatchPreferenceAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        try:
+            profile = Profile.objects.get(username_id=request.user.id)
+            preference = MatchPreference.objects.get(user=profile)
+            serializer = MatchPreferenceSerializer(preference)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Profile.DoesNotExist:
+            return Response(
+                {"detail": "User profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except MatchPreference.DoesNotExist:
+            return Response(
+                {"detail": "Match preferences not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
     def post(self, request):
         profile = Profile.objects.get(username_id=request.user.id)
 
