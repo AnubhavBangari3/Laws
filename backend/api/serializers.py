@@ -163,6 +163,7 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'profile',
+            'gender',
             'birthdate',
             'height',
             'religion',

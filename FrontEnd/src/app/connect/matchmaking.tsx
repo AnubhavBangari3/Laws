@@ -90,6 +90,9 @@ export default function Matchmaking() {
                   <Text className="font-bold text-lg text-gray-800">
                     @{match.profile_username}
                   </Text>
+                   <Text className="text-sm text-gray-600">
+                    {match.gender}
+                  </Text>
                   <Text className="text-sm text-gray-600">
                     🎓 {match.education} • 🛐 {match.religion}
                   </Text>

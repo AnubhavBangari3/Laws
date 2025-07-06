@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 const RELIGION_CHOICES = ["Hindu", "Muslim", "Christian", "Sikh", "Agnostic", "Other"];
 const EDUCATION_CHOICES = ["High School", "Bachelor's", "Master's", "PhD", "Other"];
 const JOB_CHOICES = ["Engineer", "Doctor", "Teacher", "Artist", "Business", "Actor", "Model", "Lawyer", "Other"];
+const GENDER_CHOICES = ["Male", "Female", "Others"];
 
 export default function RuleBased() {
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,7 @@ export default function RuleBased() {
   const router = useRouter();
 
   const [pp,setPP] =useState("");
+  const [gender, setGender] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [height, setHeight] = useState("");
   const [religion, setReligion] = useState("");
@@ -61,6 +63,7 @@ export default function RuleBased() {
         setReligion(data.religion);
         setEducation(data.education);
         setJob(data.job);
+        setGender(data.gender);
 
         if (data.religion === "Other") setCustomReligion(data.custom_religion || "");
         if (data.education === "Other") setCustomEducation(data.custom_education || "");
@@ -105,6 +108,7 @@ export default function RuleBased() {
         : await SecureStore.getItemAsync("access_token");
 
     const payload = {
+      gender,
       birthdate,
       height: parseFloat(height),
       religion,
@@ -195,6 +199,8 @@ export default function RuleBased() {
                       resizeMode="cover"
                     />
         <Text>📅 Birthdate: {birthdate}</Text>
+        <Text>Gender  {gender}</Text>
+
         <Text>📏 Height: {height} ft</Text>
         <Text>🛐 Religion: {religion === "Other" ? customReligion : religion}</Text>
         <Text>🎓 Education: {education === "Other" ? customEducation : education}</Text>
@@ -255,6 +261,16 @@ export default function RuleBased() {
         keyboardType="numeric"
         placeholder="5.8"
       />
+
+      <Text className="mt-2">Gender</Text>
+<View className="border rounded">
+  <Picker selectedValue={gender} onValueChange={setGender}>
+    <Picker.Item label="Select gender" value="" />
+    {GENDER_CHOICES.map((g) => (
+      <Picker.Item key={g} label={g} value={g} />
+    ))}
+  </Picker>
+</View>
 
       <Text className="mt-2">Religion</Text>
       <View className="border rounded">

@@ -74,7 +74,11 @@ JOB_CHOICES = [
     ("Lawyer", "Lawyer"),
     ("Other", "Other"),
 ]
-
+GENDER_CHOICES = [
+    ("Male", "Male"),
+    ("Female", "Female"),
+    ("Others", "Others"),
+]
 
 # Separate model for interests to allow dropdown + custom addition
 class Interest(models.Model):
@@ -85,7 +89,7 @@ class Interest(models.Model):
     
 class RuleBasedProfile(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, related_name="rule_based")
-    
+    gender = models.CharField(null=True,max_length=10, choices=GENDER_CHOICES)
     birthdate = models.DateField()
     height = models.FloatField(help_text="Height in ft")
 
