@@ -7,7 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Platform,
+  Platform,Modal,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
@@ -17,6 +17,8 @@ export default function Matchmaking() {
   const router = useRouter();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const fetchMatches = async () => {
     setLoading(true);
@@ -64,12 +66,7 @@ export default function Matchmaking() {
           Let us find your best match based on your Rule-Based Profile!
         </Text>
 
-        <TouchableOpacity
-          onPress={() => Alert.alert("You can add matching logic here later")}
-          className="bg-pink-500 px-6 py-4 rounded-2xl shadow-lg shadow-pink-300 mb-6"
-        >
-          <Text className="text-white text-lg font-bold">🔍 Start Matching</Text>
-        </TouchableOpacity>
+     
 
         {loading && <ActivityIndicator size="large" color="pink" />}
         {!loading && matches.length > 0 && (
@@ -117,11 +114,42 @@ export default function Matchmaking() {
                 >
                   <Text className="text-white font-semibold">🤝 Connect</Text>
                 </TouchableOpacity>
+                
+                <TouchableOpacity
+                  className="bg-pink-500 px-3 py-1 rounded-xl"
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Text className="text-white font-semibold">Matching score</Text> 
+                </TouchableOpacity>
               </View>
             ))}
           </View>
         )}
       </View>
+      <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <View className="flex-1 justify-center items-center bg-black bg-opacity-60">
+        <View className="bg-white w-10/12 p-6 rounded-xl items-center shadow-lg">
+          <Text className="text-lg font-bold text-purple-800 mb-4">🎯 Matching Score</Text>
+          <Text className="text-2xl font-extrabold text-green-600">85%</Text>
+          <Text className="text-gray-700 text-center mt-2">
+            This score reflects how well your profiles align.
+          </Text>
+          <TouchableOpacity
+            className="mt-6 bg-purple-600 px-6 py-2 rounded-xl"
+            onPress={() => setModalVisible(false)}
+          >
+            <Text className="text-white font-semibold">Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+
     </ScrollView>
+    
   );
 }
