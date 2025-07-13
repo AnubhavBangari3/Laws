@@ -471,4 +471,24 @@ class MatchPreferenceAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+from .matching_utils import match_profiles
+class MatchingScoreAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug):
+        try:
+            # Get the logged-in user's profile
+            user_profile = Profile.objects.get(username=request.user)
+            
+            # Get the candidate's profile using slug
+            candidate_profile = Profile.objects.get(slug=slug)
+
+        except Profile.DoesNotExist:
+            return Response({"error": "Profile not found"}, status=404)
+
+        # Call the reusable match function
+        score = match_profiles(user_profile, candidate_profile)
+        return Response({"match_score": score}, status=200)
+
 #End Rule-Based Matching

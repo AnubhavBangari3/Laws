@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView
 from rest_framework.routers import DefaultRouter
 
 
@@ -27,4 +27,5 @@ urlpatterns=[
     path("rulebased/delete/<int:interest_id>/",RuleBasedProfileRemoveInterestView.as_view()),
     path('rulebased/all/', RuleBasedProfileListView.as_view(), name='rulebased-list'),
     path('match-preferences/', MatchPreferenceAPIView.as_view(), name='match-preferences'),
+    path('match-score/', MatchingScoreAPIView.as_view(), name='match-score'),
     ]
