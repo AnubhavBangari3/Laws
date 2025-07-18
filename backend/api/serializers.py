@@ -154,6 +154,7 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
     interests = serializers.ListField(
         child=serializers.CharField(), write_only=True
     )
+    slug = serializers.CharField(source='profile.slug', read_only=True)
     interest_objects = InterestSerializer(many=True, read_only=True, source="interests")
     pp = serializers.ImageField(source="profile.pp", read_only=True)
     profile_username = serializers.SerializerMethodField()
@@ -163,6 +164,7 @@ class RuleBasedProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'profile',
+            'slug',
             'gender',
             'birthdate',
             'height',

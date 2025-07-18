@@ -27,5 +27,5 @@ urlpatterns=[
     path("rulebased/delete/<int:interest_id>/",RuleBasedProfileRemoveInterestView.as_view()),
     path('rulebased/all/', RuleBasedProfileListView.as_view(), name='rulebased-list'),
     path('match-preferences/', MatchPreferenceAPIView.as_view(), name='match-preferences'),
-    path('match-score/', MatchingScoreAPIView.as_view(), name='match-score'),
+    path('match-score/<slug:slug>/', MatchingScoreAPIView.as_view(), name='match-score'),
     ]

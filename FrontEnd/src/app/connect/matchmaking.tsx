@@ -13,12 +13,83 @@ import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import Navbar from "../Navbar";
 
+interface ProfileType {
+  id: number;
+  username: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  about: string;
+  pp: string;
+  slug: string;
+  profile_name: string;
+  num_connections: number;
+}
+
 export default function Matchmaking() {
   const router = useRouter();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+
+
+  const [selectedUser, setSelectedUser] = useState(null); // match.profile_username
+  const [matchScore, setMatchScore] = useState(null);
+
   const [modalVisible, setModalVisible] = useState(false);
+
+  const fetchProfile = async () => {
+      try {
+        const accessToken = Platform.OS === 'web'
+          ? localStorage.getItem('access_token')
+          : await SecureStore.getItemAsync('access_token');
+  
+        if (!accessToken) {
+          Alert.alert("Error", "No access token found.");
+          return;
+        }
+  
+        const response = await fetch("http://127.0.0.1:8000/profile", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        });
+  
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.detail || "Failed to fetch profile");
+        }
+  
+        const data = await response.json();
+        setProfile(data);
+      } catch (error: any) {
+        console.error("Profile Fetch Error:", error);
+        Alert.alert("Error", error.message || "An error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  console.log("profile:",profile)
+
+  const getCompatibilityLevel = (score: number | null): string => {
+  if (score === null) return "";
+
+  if (score < 10) return "COMPLEX";
+  if (score >= 15 && score <= 30) return "MEANINGFUL";
+  if (score >= 40 && score <= 50) return "POWERFUL";
+  if (score > 50 && score <= 80) return "EXTRAORDINARY";
+  if (score > 80) return "SOULMATE";
+
+  return "CHALLENGING"; // fallback for anything in-between
+};
 
   const fetchMatches = async () => {
     setLoading(true);
@@ -45,6 +116,35 @@ export default function Matchmaking() {
       setLoading(false);
     }
   };
+
+  console.log("matches:",matches)
+
+  const handleMatchScoreCheck = async (slug, matchUsername) => {
+  try {
+    const token =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    const res = await fetch(`http://127.0.0.1:8000/match-score/${slug}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch score");
+
+    const data = await res.json();
+    
+    setMatchScore(data.match_score);
+    setSelectedUser(matchUsername);
+    setModalVisible(true);
+  } catch (err) {
+    console.error(err);
+    Alert.alert("Error", "Could not fetch matching score.");
+  }
+};
+
 
   // ✅ Automatically fetch on page load
   useEffect(() => {
@@ -117,7 +217,7 @@ export default function Matchmaking() {
                 
                 <TouchableOpacity
                   className="bg-pink-500 px-3 py-1 rounded-xl"
-                  onPress={() => setModalVisible(true)}
+                  onPress={() => handleMatchScoreCheck(match.slug, match.profile_username)}
                 >
                   <Text className="text-white font-semibold">Matching score</Text> 
                 </TouchableOpacity>
@@ -126,28 +226,39 @@ export default function Matchmaking() {
           </View>
         )}
       </View>
-      <Modal
-      animationType="slide"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}
-    >
-      <View className="flex-1 justify-center items-center bg-black bg-opacity-60">
-        <View className="bg-white w-10/12 p-6 rounded-xl items-center shadow-lg">
-          <Text className="text-lg font-bold text-purple-800 mb-4">🎯 Matching Score</Text>
-          <Text className="text-2xl font-extrabold text-green-600">85%</Text>
-          <Text className="text-gray-700 text-center mt-2">
-            This score reflects how well your profiles align.
-          </Text>
-          <TouchableOpacity
-            className="mt-6 bg-purple-600 px-6 py-2 rounded-xl"
-            onPress={() => setModalVisible(false)}
-          >
-            <Text className="text-white font-semibold">Close</Text>
-          </TouchableOpacity>
-        </View>
+    <Modal
+  animationType="slide"
+  transparent={true}
+  visible={modalVisible}
+  onRequestClose={() => setModalVisible(false)}
+>
+  <View className="flex-1 justify-center items-center bg-black bg-opacity-60">
+    <View className="bg-white w-10/12 p-6 rounded-xl items-center shadow-lg">
+      <Text className="text-lg font-bold text-purple-800 mb-2">🎯 Matching Score</Text>
+      
+      <View className="flex-row justify-between w-full px-4 mb-2">
+        <Text className="text-sm font-semibold text-gray-600">@{profile?.profile_name || "..."}</Text>
+        <Text className="text-sm font-semibold text-gray-600">@{selectedUser}</Text>
       </View>
-    </Modal>
+
+      <Text className="text-lg font-semibold text-purple-600 mt-2">
+        Compatibility Level: {getCompatibilityLevel(matchScore)}
+      </Text>
+      
+      <Text className="text-gray-700 text-center mt-2">
+        This score reflects how well your profiles align.
+      </Text>
+
+      <TouchableOpacity
+        className="mt-6 bg-purple-600 px-6 py-2 rounded-xl"
+        onPress={() => setModalVisible(false)}
+      >
+        <Text className="text-white font-semibold">Close</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
 
     </ScrollView>
     

@@ -488,6 +488,8 @@ class MatchingScoreAPIView(APIView):
             return Response({"error": "Profile not found"}, status=404)
 
         # Call the reusable match function
+        print("user_profile view:",user_profile)
+        print("candidate_profile view:",candidate_profile)
         score = match_profiles(user_profile, candidate_profile)
         return Response({"match_score": score}, status=200)
 
