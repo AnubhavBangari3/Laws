@@ -7,8 +7,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Platform,Modal,
+  Platform,Modal,SafeAreaView,
 } from "react-native";
+
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import Navbar from "../Navbar";
@@ -153,15 +154,19 @@ console.log("selectedUser:",selectedUser);
   }, []);
 
   return (
-    <ScrollView className="bg-white">
+
+    <SafeAreaView className="flex-1 bg-white">
       <Navbar />
+    <ScrollView className="bg-white"  contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={true}>
+      
       <View className="items-center px-4 py-6">
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+        <TouchableOpacity   onPress={() => router.push("/connect")} className="mb-4">
           <Text className="text-blue-500 underline">← Back to Profile</Text>
         </TouchableOpacity>
 
         <Text className="text-2xl font-bold text-pink-600 mb-2">
-          💘 Matchmaking Center
+          💘 Vibe Check
         </Text>
         <Text className="text-base text-center mb-4 text-gray-700">
           Let us find your best match based on your Rule-Based Profile!
@@ -175,55 +180,64 @@ console.log("selectedUser:",selectedUser);
             <Text className="text-xl font-semibold mb-4 text-left">
               🎯 Suggestions for You
             </Text>
-            {matches.map((match) => (
-              <View
-                key={match.id}
-                className="flex-row items-center bg-gray-50 rounded-xl p-4 mb-4 shadow"
-              >
-                <Image
-                  source={{ uri: `${match.pp}` }}
-                  className="w-16 h-16 rounded-full border-2 border-pink-400"
-                />
-                <View className="flex-1 ml-4">
-                  <Text className="font-bold text-lg text-gray-800">
-                    @{match.profile_username}
-                  </Text>
-                   <Text className="text-sm text-gray-600">
-                    {match.gender}
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    🎓 {match.education} • 🛐 {match.religion}
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    💼 {match.job} • 📅 {match.birthdate}
-                  </Text>
-                </View>
-                 {/* 👇 Show interests here */}
-                <View className="flex-row flex-wrap mt-1">
-                  {match.interest_objects?.map((interest) => (
-                    <Text
-                      key={interest.id}
-                      className="text-xs bg-pink-100 text-pink-800 px-2 py-1 mr-2 mb-2 rounded-full"
-                    >
-                      {interest.name}
-                    </Text>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  className="bg-pink-500 px-3 py-1 rounded-xl"
-                  onPress={() => Alert.alert("Connect Request Sent!")}
-                >
-                  <Text className="text-white font-semibold">🤝 Connect</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  className="bg-pink-500 px-3 py-1 rounded-xl"
-                  onPress={() => handleMatchScoreCheck(match.slug, match)}
-                >
-                  <Text className="text-white font-semibold">Matching score</Text> 
-                </TouchableOpacity>
-              </View>
-            ))}
+           {matches.map((match) => (
+  <View
+    key={match.id}
+    className="bg-white rounded-2xl p-4 mb-6 shadow-lg border border-gray-200"
+  >
+    {/* Profile Section */}
+    <View className="flex-row items-center">
+      <Image
+        source={{ uri: match.pp }}
+        className="w-20 h-20 rounded-full border-2 border-pink-400"
+      />
+      <View className="ml-4 flex-1">
+        <Text className="font-bold text-xl text-gray-800 mb-1">
+          @{match.profile_username}
+        </Text>
+        <Text className="text-sm text-gray-600 mb-0.5">👤 {match.gender}</Text>
+        <Text className="text-sm text-gray-600 mb-0.5">
+          🎓 {match.education} • 🛐 {match.religion}
+        </Text>
+        <Text className="text-sm text-gray-600">
+          💼 {match.job} • 📅 {match.birthdate}
+        </Text>
+      </View>
+    </View>
+
+    {/* Interests */}
+    {match.interest_objects?.length > 0 && (
+      <View className="flex-row flex-wrap mt-4">
+        {match.interest_objects.map((interest) => (
+          <Text
+            key={interest.id}
+            className="text-xs bg-pink-100 text-pink-700 px-3 py-1 mr-2 mb-2 rounded-full font-medium"
+          >
+            {interest.name}
+          </Text>
+        ))}
+      </View>
+    )}
+
+    {/* Action Buttons */}
+    <View className="flex-row justify-between mt-4 space-x-3">
+      <TouchableOpacity
+        className="flex-1 bg-green-500 py-2 rounded-full items-center"
+        onPress={() => Alert.alert("Connect Request Sent!")}
+      >
+        <Text className="text-white font-semibold text-sm">🤝 Send Connect</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        className="flex-1 bg-purple-600 py-2 rounded-full items-center"
+        onPress={() => handleMatchScoreCheck(match.slug, match)}
+      >
+        <Text className="text-white font-semibold text-sm">🔍 Match Score</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+))}
+
           </View>
         )}
       </View>
@@ -289,6 +303,6 @@ console.log("selectedUser:",selectedUser);
 
 
     </ScrollView>
-    
+    </SafeAreaView>
   );
 }

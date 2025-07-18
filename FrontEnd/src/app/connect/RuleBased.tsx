@@ -230,7 +230,7 @@ export default function RuleBased() {
           className="bg-pink-500 mt-6 mx-2 p-4 rounded-2xl shadow-lg shadow-pink-300 mb-10"
         >
           <Text className="text-white text-center text-lg font-extrabold tracking-wide">
-            💖 Find Matches
+            💖 Vibe check
           </Text>
         </TouchableOpacity>
 
