@@ -145,6 +145,7 @@ export default function Matchmaking() {
   }
 };
 
+console.log("selectedUser:",selectedUser);
 
   // ✅ Automatically fetch on page load
   useEffect(() => {
@@ -217,7 +218,7 @@ export default function Matchmaking() {
                 
                 <TouchableOpacity
                   className="bg-pink-500 px-3 py-1 rounded-xl"
-                  onPress={() => handleMatchScoreCheck(match.slug, match.profile_username)}
+                  onPress={() => handleMatchScoreCheck(match.slug, match)}
                 >
                   <Text className="text-white font-semibold">Matching score</Text> 
                 </TouchableOpacity>
@@ -226,38 +227,65 @@ export default function Matchmaking() {
           </View>
         )}
       </View>
-    <Modal
+  <Modal
   animationType="slide"
   transparent={true}
   visible={modalVisible}
   onRequestClose={() => setModalVisible(false)}
 >
   <View className="flex-1 justify-center items-center bg-black bg-opacity-60">
-    <View className="bg-white w-10/12 p-6 rounded-xl items-center shadow-lg">
-      <Text className="text-lg font-bold text-purple-800 mb-2">🎯 Matching Score</Text>
-      
-      <View className="flex-row justify-between w-full px-4 mb-2">
-        <Text className="text-sm font-semibold text-gray-600">@{profile?.profile_name || "..."}</Text>
-        <Text className="text-sm font-semibold text-gray-600">@{selectedUser}</Text>
+    <View className="bg-white w-11/12 px-6 py-8 rounded-2xl shadow-xl items-center">
+      {/* Title */}
+      <Text className="text-2xl font-bold text-purple-700 mb-4">🎯 Match Score</Text>
+
+      {/* Profile Comparison */}
+      <View className="flex-row justify-between items-center w-full px-2 mb-4">
+        {/* Your Profile */}
+        <View className="items-center flex-1">
+          <Image
+            source={{ uri: `http://127.0.0.1:8000${profile?.pp}` }}
+            className="w-20 h-20 rounded-full border-2 border-pink-400 mb-2"
+          />
+          <Text className="text-sm font-semibold text-gray-600 text-center">
+            @{profile?.profile_name || "..."}
+          </Text>
+        </View>
+
+        {/* VS Divider */}
+        <Text className="text-2xl font-bold text-purple-500 mx-2">🤝</Text>
+
+        {/* Matched Profile */}
+        <View className="items-center flex-1">
+          <Image
+            source={{ uri: selectedUser?.pp }}
+            className="w-20 h-20 rounded-full border-2 border-pink-400 mb-2"
+          />
+          <Text className="text-sm font-semibold text-gray-600 text-center">
+            @{selectedUser?.profile_username}
+          </Text>
+        </View>
       </View>
 
-      <Text className="text-lg font-semibold text-purple-600 mt-2">
-        Compatibility Level: {getCompatibilityLevel(matchScore)}
-      </Text>
-      
-      <Text className="text-gray-700 text-center mt-2">
-        This score reflects how well your profiles align.
+      {/* Compatibility Level */}
+      <Text className="text-xl font-semibold text-purple-600 mt-4 mb-1">
+        Compatibility: {getCompatibilityLevel(matchScore)}
       </Text>
 
+      <Text className="text-sm text-gray-600 text-center px-4">
+        This score reflects how well your energies and interests align.
+      </Text>
+
+      {/* Close Button */}
       <TouchableOpacity
-        className="mt-6 bg-purple-600 px-6 py-2 rounded-xl"
+        className="mt-6 bg-purple-600 px-6 py-3 rounded-full w-full items-center"
         onPress={() => setModalVisible(false)}
       >
-        <Text className="text-white font-semibold">Close</Text>
+        <Text className="text-white font-semibold text-base">Close</Text>
       </TouchableOpacity>
     </View>
   </View>
 </Modal>
+
 
 
     </ScrollView>
