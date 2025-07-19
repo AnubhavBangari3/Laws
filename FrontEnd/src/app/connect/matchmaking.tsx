@@ -84,10 +84,10 @@ export default function Matchmaking() {
   if (score === null) return "";
 
   if (score < 10) return "COMPLEX";
-  if (score >= 15 && score <= 30) return "MEANINGFUL";
-  if (score >= 40 && score <= 50) return "POWERFUL";
-  if (score > 50 && score <= 80) return "EXTRAORDINARY";
-  if (score > 80) return "SOULMATE";
+  if (score >= 15 && score <=40) return "MEANINGFUL";
+  if (score >= 41 && score <= 60) return "POWERFUL";
+  if (score > 60 && score <= 85) return "EXTRAORDINARY";
+  if (score > 85) return "SOULMATE";
 
   return "CHALLENGING"; // fallback for anything in-between
 };
@@ -232,7 +232,7 @@ console.log("selectedUser:",selectedUser);
         className="flex-1 bg-purple-600 py-2 rounded-full items-center"
         onPress={() => handleMatchScoreCheck(match.slug, match)}
       >
-        <Text className="text-white font-semibold text-sm">🔍 Match Score</Text>
+        <Text className="text-white font-semibold text-sm">🔍 Vibe Check</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -250,7 +250,7 @@ console.log("selectedUser:",selectedUser);
   <View className="flex-1 justify-center items-center bg-black bg-opacity-60">
     <View className="bg-white w-11/12 px-6 py-8 rounded-2xl shadow-xl items-center">
       {/* Title */}
-      <Text className="text-2xl font-bold text-purple-700 mb-4">🎯 Match Score</Text>
+      <Text className="text-2xl font-bold text-purple-700 mb-4">🎯 Vibe Check</Text>
 
       {/* Profile Comparison */}
       <View className="flex-row justify-between items-center w-full px-2 mb-4">
@@ -281,6 +281,9 @@ console.log("selectedUser:",selectedUser);
       </View>
 
       {/* Compatibility Level */}
+      <Text className="text-xl font-semibold text-purple-600 mt-4 mb-1">
+        Score: {matchScore} %
+      </Text>
       <Text className="text-xl font-semibold text-purple-600 mt-4 mb-1">
         Compatibility: {getCompatibilityLevel(matchScore)}
       </Text>

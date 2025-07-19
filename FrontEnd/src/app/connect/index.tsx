@@ -34,8 +34,8 @@ export default function ConnectPage() {
 
   const options = [
     { label: "Rule-Based", value: "rule" },
-    { label: "Collaborative", value: "collab" },
-    { label: "Content-Based", value: "content" },
+    // { label: "Collaborative", value: "collab" },
+    // { label: "Content-Based", value: "content" },
     { label: "Compatibility Score", value: "compat" },
     { label: "ML Matching", value: "ml" },
   ];
