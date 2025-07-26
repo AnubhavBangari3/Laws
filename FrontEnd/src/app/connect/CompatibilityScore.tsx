@@ -16,49 +16,83 @@ export default function CompatibilityScore() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const API_URL = "http://127.0.0.1:8000/api/personality-answers/bulk/";
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const token =
-          Platform.OS === "web"
-            ? localStorage.getItem("access_token")
-            : await SecureStore.getItemAsync("access_token");
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
 
-        const res = await fetch("http://127.0.0.1:8000/api/personality-questions/", {
+      // 1. Fetch Questions
+      const questionRes = await fetch(
+        "http://127.0.0.1:8000/api/personality-questions/",
+        {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+        }
+      );
+
+      const questionData = await questionRes.json();
+
+      if (!questionRes.ok) {
+        Alert.alert("Error", "Unable to fetch questions.");
+        return;
+      }
+
+      setQuestions(questionData);
+
+      // 2. Fetch Existing Answers
+      const answerRes = await fetch(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const answerData = await answerRes.json();
+
+      // Create initial form state with empty values
+      const initialFormState = {};
+      questionData.forEach((q) => {
+        initialFormState[q.id] = "";
+      });
+
+      // Merge with existing answers if they exist
+      if (answerRes.ok && answerData.answers && Array.isArray(answerData.answers)) {
+        const newFormState = { ...initialFormState };
+        
+        answerData.answers.forEach((a) => {
+          // Use a.question.id instead of a.question_id if that's how it's structured
+          const questionId = a.question?.id || a.question_id;
+          if (questionId in newFormState) {
+            newFormState[questionId] = a.answer;
+          }
         });
 
-        const data = await res.json();
-
-        if (res.ok) {
-          setQuestions(data);
-
-          // Fix: Use correct question ID key
-          const initialFormState = {};
-          data.forEach((q) => {
-            initialFormState[q.id] = "";
-          });
-          setForm(initialFormState);
-        } else {
-          console.error(data);
-          Alert.alert("Error", "Unable to fetch questions.");
-        }
-      } catch (error) {
-        console.error(error);
-        Alert.alert("Error", "Something went wrong while fetching questions.");
+        setForm(newFormState);
+        setIsEditMode(true);
+        setResult(answerData.predicted_mbti || "");
+      } else {
+        setForm(initialFormState);
       }
-    };
+    } catch (error) {
+      console.error("Fetch Error:", error);
+      Alert.alert("Error", "Something went wrong while loading data.");
+    }
+  };
 
-    fetchQuestions();
-  }, []);
+  fetchData();
+}, []);
 
-  const handleChange = (key: string, value: string) => {
-    setForm({ ...form, [key]: value });
+
+
+  const handleChange = (key, value) => {
+    setForm((prevForm) => ({ ...prevForm, [key]: value }));
   };
 
   const handleSubmit = async () => {
@@ -76,8 +110,7 @@ export default function CompatibilityScore() {
         answer,
       }));
 
-      console.log("answers:", answers);
-
+      // Save answers
       const saveRes = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -91,11 +124,10 @@ export default function CompatibilityScore() {
         const errorData = await saveRes.json();
         console.error("Save Error:", errorData);
         Alert.alert("Error", "Failed to save answers.");
-        setLoading(false);
         return;
       }
 
-      // 🔁 GET MBTI Prediction (if implemented on backend)
+      // Get prediction
       const getRes = await fetch(API_URL, {
         method: "GET",
         headers: {
@@ -105,14 +137,15 @@ export default function CompatibilityScore() {
 
       const resultData = await getRes.json();
 
-      if (getRes.ok) {
+      if (getRes.ok && resultData.predicted_mbti) {
         setResult(resultData.predicted_mbti);
       } else {
-        console.error("Prediction Error:", resultData);
-        Alert.alert("Error", resultData.error || "Failed to get MBTI result.");
+        Alert.alert("Note", resultData?.error || "Answers saved but no MBTI result.");
       }
+
+      setIsEditMode(true);
     } catch (err) {
-      console.error(err);
+      console.error("Submit Error:", err);
       Alert.alert("Error", "Something went wrong.");
     } finally {
       setLoading(false);
@@ -131,7 +164,7 @@ export default function CompatibilityScore() {
           <TextInput
             multiline
             className="border border-gray-300 p-2 rounded-md text-sm bg-gray-50"
-            value={form[q.id]}
+            value={form[q.id] || ""}
             onChangeText={(text) => handleChange(q.id, text)}
           />
         </View>
@@ -145,7 +178,7 @@ export default function CompatibilityScore() {
           onPress={handleSubmit}
         >
           <Text className="text-white font-bold text-center">
-            Submit & Get MBTI Type
+            {isEditMode ? "Edit & Update Answers" : "Submit & Get MBTI Type"}
           </Text>
         </Pressable>
       )}
@@ -153,7 +186,7 @@ export default function CompatibilityScore() {
       {result ? (
         <View className="mt-6 items-center">
           <Text className="text-lg font-semibold text-green-600">
-            🎉 Your MBTI Type: {result}
+            🎉 Your MBTI Type: <Text className="text-xl">{result}</Text>
           </Text>
         </View>
       ) : null}

@@ -552,7 +552,7 @@ class PersonalityAnswerBulkAPIView(APIView):
     def get(self, request):
         user = Profile.objects.get(username=request.user)
         answers = PersonalityAnswer.objects.filter(user=user).order_by('question__question_id')
-
+        print("answers get:",answers)
         if not answers.exists():
             return Response({"error": "No answers found."}, status=status.HTTP_404_NOT_FOUND)
 
