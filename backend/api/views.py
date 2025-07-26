@@ -507,9 +507,15 @@ class PersonalityQuestionListView(APIView):
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-
+'''
 tokenizer = AutoTokenizer.from_pretrained("gitaf/roberta-base-roberta-base-finetuned-mbti-0912-weight0")
 model = AutoModelForSequenceClassification.from_pretrained("gitaf/roberta-base-roberta-base-finetuned-mbti-0912-weight0")
+'''
+
+tokenizer = AutoTokenizer.from_pretrained("parka735/mbti-classifier")
+model = AutoModelForSequenceClassification.from_pretrained("parka735/mbti-classifier")
+
+
 labels = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
           'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP']
 
@@ -552,7 +558,7 @@ class PersonalityAnswerBulkAPIView(APIView):
     def get(self, request):
         user = Profile.objects.get(username=request.user)
         answers = PersonalityAnswer.objects.filter(user=user).order_by('question__question_id')
-        print("answers get:",answers)
+        #print("answers get:",answers)
         if not answers.exists():
             return Response({"error": "No answers found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -561,9 +567,15 @@ class PersonalityAnswerBulkAPIView(APIView):
         # Run model inference
         inputs = tokenizer(combined_text, return_tensors="pt", truncation=True, padding=True)
         outputs = model(**inputs)
+        print("outputs:",outputs)
         probs = torch.nn.functional.softmax(outputs.logits, dim=1)
+        print("probs:",probs)
         pred_idx = torch.argmax(probs, dim=1).item()
+        print("pred_idx:",pred_idx)
         predicted_mbti = labels[pred_idx]
+        print("predicted_mbti:",predicted_mbti)
+        print("Model config:", model.config)
+        print("Logits shape:", outputs.logits.shape)
 
         serialized = PersonalityAnswerSerializer(answers, many=True)
         return Response({
