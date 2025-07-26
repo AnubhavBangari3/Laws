@@ -131,7 +131,42 @@ class MatchPreference(models.Model):
 '''
 End Rule-Based Matching
 '''
+'''
+Compatibility Score Models Matching start
+'''
+class PersonalityQuestion(models.Model):
+    QUESTION_CHOICES = [
+        ("q1", "Q1. How do you recharge — alone or with others?"),
+        ("q2", "Q2. Prefer concrete facts or abstract ideas?"),
+        ("q3", "Q3. Logic or emotions in decisions?"),
+        ("q4", "Q4. Structured or spontaneous lifestyle?"),
+        ("q5", "Q5. Describe your ideal weekend"),
+        ("q6", "Q6. How do you handle conflicts?"),
+        ("q7", "Q7. What motivates you most at work?"),
+        ("q8", "Q8. How would your friends describe you?"),
+    ]
+
+    question_id = models.CharField(max_length=10, choices=QUESTION_CHOICES, unique=True)
     
+
+    def __str__(self):
+        return self.get_question_id_display()
+
+
+class PersonalityAnswer(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="personality_answers")
+    question = models.ForeignKey(PersonalityQuestion, on_delete=models.CASCADE, related_name="answers")
+    answer = models.TextField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'question')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.question.question_id}"
+'''
+Compatibility Score Models Matching End
+'''
 class Blogs(models.Model):
     author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="post_author")
     content = models.TextField()

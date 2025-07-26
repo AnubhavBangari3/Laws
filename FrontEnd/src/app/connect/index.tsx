@@ -2,13 +2,14 @@ import { View, Text, Pressable, ScrollView } from "react-native";
 import { useState } from "react";
 import Navbar from "../Navbar";
 import RuleBased from "./RuleBased";
+import CompatibilityScore from "./CompatibilityScore";
 import MatchPreferencesForm from "./MatchPreferencesForm";
 import Modal from "react-native-modal";
 
 // Placeholder components
 const Collaborative = () => <Text className="text-center text-lg mt-4">Collaborative Filtering Section</Text>;
 const ContentBased = () => <Text className="text-center text-lg mt-4">Content-Based Filtering Section</Text>;
-const CompatibilityScore = () => <Text className="text-center text-lg mt-4">Compatibility Score Models</Text>;
+//const CompatibilityScore = () => <Text className="text-center text-lg mt-4">Compatibility Score Models</Text>;
 const MLMatching = () => <Text className="text-center text-lg mt-4">Machine Learning Based Matching</Text>;
 
 export default function ConnectPage() {
@@ -19,10 +20,10 @@ export default function ConnectPage() {
     switch (selected) {
       case "rule":
         return <RuleBased />;
-      case "collab":
-        return <Collaborative />;
-      case "content":
-        return <ContentBased />;
+      // case "collab":
+      //   return <Collaborative />;
+      // case "content":
+      //   return <ContentBased />;
       case "compat":
         return <CompatibilityScore />;
       case "ml":

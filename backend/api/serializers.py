@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer
 
 
 class LoginSerializer(serializers.Serializer):
@@ -230,3 +230,30 @@ class MatchPreferenceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["updated_at","user"] 
 #End Rule-Based Matching
+'''
+Compatibility Score Models Matching start
+'''
+
+class PersonalityQuestionSerializer(serializers.ModelSerializer):
+    question_text = serializers.CharField(source='get_question_id_display', read_only=True)
+    class Meta:
+        model = PersonalityQuestion
+        fields = ['id', 'question_id', 'get_question_id_display','question_text']
+    
+    #get_question_id_display = serializers.CharField(source='get_question_id_display', read_only=True)
+
+
+class PersonalityAnswerSerializer(serializers.ModelSerializer):
+    question = PersonalityQuestionSerializer(read_only=True)
+    question_id = serializers.PrimaryKeyRelatedField(
+        source='question', queryset=PersonalityQuestion.objects.all(), write_only=True
+    )
+    
+    class Meta:
+        model = PersonalityAnswer
+        fields = ['id', 'user', 'question', 'question_id', 'answer', 'submitted_at']
+        read_only_fields = ['submitted_at']
+
+'''
+Compatibility Score Models Matching end
+'''

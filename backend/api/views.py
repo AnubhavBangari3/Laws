@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -494,3 +494,17 @@ class MatchingScoreAPIView(APIView):
         return Response({"match_score": score}, status=200)
 
 #End Rule-Based Matching
+'''
+Compatibility Score Models Matching start
+'''
+class PersonalityQuestionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        questions = PersonalityQuestion.objects.all().order_by('question_id')
+        serializer = PersonalityQuestionSerializer(questions, many=True)
+        return Response(serializer.data)
+
+'''
+Compatibility Score Models Matching end
+'''
