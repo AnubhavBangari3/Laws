@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView
 from rest_framework.routers import DefaultRouter
 
 
@@ -29,4 +29,5 @@ urlpatterns=[
     path('match-preferences/', MatchPreferenceAPIView.as_view(), name='match-preferences'),
     path('match-score/<slug:slug>/', MatchingScoreAPIView.as_view(), name='match-score'),
     path('api/personality-questions/', PersonalityQuestionListView.as_view(), name='personality-questions'),
+    path("api/personality-answers/bulk/", PersonalityAnswerBulkAPIView.as_view(), name="personality-answer-bulk"),
     ]

@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { useState, useEffect } from "react";
-import * as SecureStore from "expo-secure-store"; // for mobile token storage
+import * as SecureStore from "expo-secure-store";
 
 export default function CompatibilityScore() {
   const [form, setForm] = useState({});
@@ -17,7 +17,8 @@ export default function CompatibilityScore() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
 
-  // 🔁 Fetch Questions from Backend
+  const API_URL = "http://127.0.0.1:8000/api/personality-answers/bulk/";
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -37,10 +38,10 @@ export default function CompatibilityScore() {
         if (res.ok) {
           setQuestions(data);
 
-          // initialize form state dynamically
+          // Fix: Use correct question ID key
           const initialFormState = {};
           data.forEach((q) => {
-            initialFormState[q.question_id] = "";
+            initialFormState[q.id] = "";
           });
           setForm(initialFormState);
         } else {
@@ -62,8 +63,60 @@ export default function CompatibilityScore() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // Submit logic here
-    setLoading(false);
+    setResult("");
+
+    try {
+      const token =
+        Platform.OS === "web"
+          ? localStorage.getItem("access_token")
+          : await SecureStore.getItemAsync("access_token");
+
+      const answers = Object.entries(form).map(([question_id, answer]) => ({
+        question_id: Number(question_id),
+        answer,
+      }));
+
+      console.log("answers:", answers);
+
+      const saveRes = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ answers }),
+      });
+
+      if (!saveRes.ok) {
+        const errorData = await saveRes.json();
+        console.error("Save Error:", errorData);
+        Alert.alert("Error", "Failed to save answers.");
+        setLoading(false);
+        return;
+      }
+
+      // 🔁 GET MBTI Prediction (if implemented on backend)
+      const getRes = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const resultData = await getRes.json();
+
+      if (getRes.ok) {
+        setResult(resultData.predicted_mbti);
+      } else {
+        console.error("Prediction Error:", resultData);
+        Alert.alert("Error", resultData.error || "Failed to get MBTI result.");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,8 +131,8 @@ export default function CompatibilityScore() {
           <TextInput
             multiline
             className="border border-gray-300 p-2 rounded-md text-sm bg-gray-50"
-            value={form[q.question_id]}
-            onChangeText={(text) => handleChange(q.question_id, text)}
+            value={form[q.id]}
+            onChangeText={(text) => handleChange(q.id, text)}
           />
         </View>
       ))}
@@ -97,13 +150,13 @@ export default function CompatibilityScore() {
         </Pressable>
       )}
 
-      {result && (
+      {result ? (
         <View className="mt-6 items-center">
           <Text className="text-lg font-semibold text-green-600">
-            🎉 Your MBTI Type: <Text className="text-xl">{result}</Text>
+            🎉 Your MBTI Type: {result}
           </Text>
         </View>
-      )}
+      ) : null}
     </ScrollView>
   );
 }

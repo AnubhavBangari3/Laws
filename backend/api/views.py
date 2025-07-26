@@ -505,6 +505,71 @@ class PersonalityQuestionListView(APIView):
         serializer = PersonalityQuestionSerializer(questions, many=True)
         return Response(serializer.data)
 
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
+tokenizer = AutoTokenizer.from_pretrained("gitaf/roberta-base-roberta-base-finetuned-mbti-0912-weight0")
+model = AutoModelForSequenceClassification.from_pretrained("gitaf/roberta-base-roberta-base-finetuned-mbti-0912-weight0")
+labels = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
+          'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP']
+
+class PersonalityAnswerBulkAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    
+    def post(self, request):
+        user = Profile.objects.get(username=request.user)
+        data = request.data.get("answers", [])
+        if not isinstance(data, list):
+            return Response({"error": "answers must be a list"}, status=status.HTTP_400_BAD_REQUEST)
+
+        saved_answers = []
+        print("data:",data)
+        for item in data:
+            question_id = item.get("question_id")
+            answer_text = item.get("answer")
+            print(f"question_id - {question_id} -> answer_text - {answer_text}")
+            try:
+                question = PersonalityQuestion.objects.get(id=question_id)
+            except PersonalityQuestion.DoesNotExist:
+                continue  # skip invalid
+
+            obj, _ = PersonalityAnswer.objects.update_or_create(
+                user=user,
+                question=question,
+                defaults={"answer": answer_text}
+            )
+
+            saved_answers.append(obj)
+            print("saved_answers:",saved_answers)
+        serialized = PersonalityAnswerSerializer(saved_answers, many=True)
+        return Response({
+            "message": "Answers saved successfully.",
+            "saved_answers": serialized.data
+        }, status=status.HTTP_201_CREATED)
+
+    
+    def get(self, request):
+        user = Profile.objects.get(username=request.user)
+        answers = PersonalityAnswer.objects.filter(user=user).order_by('question__question_id')
+
+        if not answers.exists():
+            return Response({"error": "No answers found."}, status=status.HTTP_404_NOT_FOUND)
+
+        combined_text = " ".join([a.answer for a in answers])
+
+        # Run model inference
+        inputs = tokenizer(combined_text, return_tensors="pt", truncation=True, padding=True)
+        outputs = model(**inputs)
+        probs = torch.nn.functional.softmax(outputs.logits, dim=1)
+        pred_idx = torch.argmax(probs, dim=1).item()
+        predicted_mbti = labels[pred_idx]
+
+        serialized = PersonalityAnswerSerializer(answers, many=True)
+        return Response({
+            "answers": serialized.data,
+            "predicted_mbti": predicted_mbti
+        }, status=status.HTTP_200_OK)
 '''
 Compatibility Score Models Matching end
 '''
