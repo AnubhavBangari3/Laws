@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from rest_framework import viewsets
 
 from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -576,6 +576,12 @@ class PersonalityAnswerBulkAPIView(APIView):
         print("predicted_mbti:",predicted_mbti)
         print("Model config:", model.config)
         print("Logits shape:", outputs.logits.shape)
+
+        
+        profile_obj, _ = UserPersonalityProfile.objects.get_or_create(user=user)
+        profile_obj.predicted_mbti = predicted_mbti
+        profile_obj.save()
+        print("profile_obj mbti:",profile_obj)
 
         serialized = PersonalityAnswerSerializer(answers, many=True)
         return Response({

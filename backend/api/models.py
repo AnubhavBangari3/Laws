@@ -164,6 +164,15 @@ class PersonalityAnswer(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.question.question_id}"
+    
+class UserPersonalityProfile(models.Model):
+    user = models.OneToOneField(Profile, on_delete=models.CASCADE,related_name="mbti_user")
+    predicted_mbti = models.CharField(max_length=4,null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} → {self.predicted_mbti}"
+    
 '''
 Compatibility Score Models Matching End
 '''
