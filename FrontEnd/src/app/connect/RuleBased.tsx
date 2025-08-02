@@ -39,7 +39,7 @@ export default function RuleBased() {
   const [customJob, setCustomJob] = useState("");
   const [interestsInput, setInterestsInput] = useState("");
   const [interests, setInterests] = useState<{ id: number; name: string }[]>([]);
-
+const [mbti, setMbti] = useState(null);
   const fetchProfile = async () => {
     const accessToken =
       Platform.OS === "web"
@@ -85,11 +85,35 @@ export default function RuleBased() {
       setLoading(false);
     }
   };
+const fetchMBTI = async () => {
+  const accessToken =
+    Platform.OS === "web"
+      ? localStorage.getItem("access_token")
+      : await SecureStore.getItemAsync("access_token");
 
-  useEffect(() => {
-    
-    fetchProfile();
-  }, []);
+  try {
+    const res = await fetch("http://127.0.0.1:8000/personality/mbti/", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setMbti(data.predicted_mbti);
+    } else {
+      console.warn("Failed to fetch MBTI");
+    }
+  } catch (err) {
+    console.error("Error fetching MBTI", err);
+  }
+};
+
+useEffect(() => {
+  fetchProfile();
+  fetchMBTI(); // 👈 Add this here
+}, []);
+
 
 
 
@@ -205,6 +229,11 @@ export default function RuleBased() {
         <Text>🛐 Religion: {religion === "Other" ? customReligion : religion}</Text>
         <Text>🎓 Education: {education === "Other" ? customEducation : education}</Text>
         <Text>💼 Job: {job === "Other" ? customJob : job}</Text>
+        {mbti && (
+          <Text>
+            MBTI Personality: {mbti}
+          </Text>
+        )}
         <View className="flex-row flex-wrap mt-2">
           {interests.map((interest) => (
             <TouchableOpacity

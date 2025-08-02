@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer,UserPersonalityProfile
 
 
 class LoginSerializer(serializers.Serializer):
@@ -253,7 +253,11 @@ class PersonalityAnswerSerializer(serializers.ModelSerializer):
         model = PersonalityAnswer
         fields = ['id', 'user', 'question', 'question_id', 'answer', 'submitted_at']
         read_only_fields = ['submitted_at']
-
+        
+class UserPersonalityProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPersonalityProfile
+        fields = ['predicted_mbti', 'updated_at']
 '''
 Compatibility Score Models Matching end
 '''

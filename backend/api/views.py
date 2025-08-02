@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer,UserPersonalityProfileSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,UserPersonalityProfile
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -588,6 +588,24 @@ class PersonalityAnswerBulkAPIView(APIView):
             "answers": serialized.data,
             "predicted_mbti": predicted_mbti
         }, status=status.HTTP_200_OK)
+    
+
+class UserPersonalityProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            profile = Profile.objects.get(username=request.user)
+            personality_profile = profile.mbti_user  # related_name="mbti_user"
+        except UserPersonalityProfile.DoesNotExist:
+            return Response(
+                {"error": "MBTI personality profile not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = UserPersonalityProfileSerializer(personality_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 '''
 Compatibility Score Models Matching end
 '''
