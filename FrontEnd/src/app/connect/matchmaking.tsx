@@ -169,7 +169,7 @@ console.log("selectedUser:",selectedUser);
           💘 Vibe Check
         </Text>
         <Text className="text-base text-center mb-4 text-gray-700">
-          Let us find your best match based on your Rule-Based Profile!
+          Lets check the vibe
         </Text>
 
      
