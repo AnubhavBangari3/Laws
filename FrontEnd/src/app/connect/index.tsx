@@ -38,7 +38,7 @@ export default function ConnectPage() {
     // { label: "Collaborative", value: "collab" },
     // { label: "Content-Based", value: "content" },
     { label: "Personality Type", value: "compat" },
-    { label: "ML Matching", value: "ml" },
+    //{ label: "ML Matching", value: "ml" },
   ];
 
   return (
