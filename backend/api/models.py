@@ -226,3 +226,29 @@ class Movie(models.Model):
 
     def __str__(self):
         return f"{self.title} liked by {self.user.username}"
+    
+class FriendRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("declined", "Declined"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sent_friend_requests")
+    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="received_friend_requests")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("sender", "receiver")
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(sender=models.F("receiver")),
+                name="prevent_self_friend_request"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.sender} → {self.receiver} ({self.status})"

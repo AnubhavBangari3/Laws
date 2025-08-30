@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer,UserPersonalityProfileSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,UserPersonalityProfile
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer,UserPersonalityProfileSerializer,FriendRequestSerializer
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,UserPersonalityProfile,FriendRequest
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -80,6 +80,8 @@ class ProfileView(APIView):
       def get(self,request):
           print("checking:",request.user)
           profile=Profile.objects.get(username_id=request.user.id)
+          print("profile:",profile.id)
+          print("Profiles:",[i.id for i in Profile.objects.all()])
           serializer=ProfileSerializer(profile,many=False)
           return Response(serializer.data)
       
@@ -609,3 +611,44 @@ class UserPersonalityProfileAPIView(APIView):
 '''
 Compatibility Score Models Matching end
 '''
+class SendFriendRequestView(generics.CreateAPIView):
+    serializer_class = FriendRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        receiver_id = self.kwargs.get("id")  # receiver ID from URL
+        receiver = get_object_or_404(Profile, id=receiver_id)
+        print("receiver:",receiver,"receiver_id-",receiver_id)
+
+        # Get the sender's profile
+        try:
+            sender_profile = Profile.objects.get(username=request.user)
+            print("sender_profile:",sender_profile)
+        except Profile.DoesNotExist:
+            return Response({"detail": "Profile for user not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent duplicate requests
+        if FriendRequest.objects.filter(sender=sender_profile, receiver=receiver).exists():
+            return Response({"detail": "Friend request already sent."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prevent sending to self
+        if sender_profile == receiver:
+            return Response({"detail": "You cannot send a friend request to yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the request
+        friend_request = FriendRequest.objects.create(
+            sender=sender_profile,
+            receiver=receiver
+        )
+        serializer = self.get_serializer(friend_request)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class SentPendingFriendRequestsView(generics.ListAPIView):
+    serializer_class = FriendRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get the sender's profile for the logged-in user
+        sender_profile = get_object_or_404(Profile, username=self.request.user)
+        # Filter only pending requests
+        return FriendRequest.objects.filter(sender=sender_profile, status="pending")

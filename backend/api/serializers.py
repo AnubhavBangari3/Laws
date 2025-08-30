@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer,UserPersonalityProfile
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer,UserPersonalityProfile,FriendRequest
 
 
 class LoginSerializer(serializers.Serializer):
@@ -261,3 +261,19 @@ class UserPersonalityProfileSerializer(serializers.ModelSerializer):
 '''
 Compatibility Score Models Matching end
 '''
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    sender = ProfileSerializer(read_only=True)  
+    receiver = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = FriendRequest
+        fields = [
+            "id",
+            "sender",
+            "receiver",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ("status", "created_at", "updated_at")

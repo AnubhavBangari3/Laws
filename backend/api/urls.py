@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView,SendFriendRequestView,SentPendingFriendRequestsView
 from rest_framework.routers import DefaultRouter
 
 
@@ -31,5 +31,8 @@ urlpatterns=[
     path('api/personality-questions/', PersonalityQuestionListView.as_view(), name='personality-questions'),
     path("api/personality-answers/bulk/", PersonalityAnswerBulkAPIView.as_view(), name="personality-answer-bulk"),
     path('personality/mbti/', UserPersonalityProfileAPIView.as_view(), name='user-mbti'),
+    path("friend-request/send/<int:id>/", SendFriendRequestView.as_view(), name="send-friend-request"),
+    path("friend-request/sent/pending/", SentPendingFriendRequestsView.as_view(), name="sent-pending-friend-requests"),
+
 
     ]

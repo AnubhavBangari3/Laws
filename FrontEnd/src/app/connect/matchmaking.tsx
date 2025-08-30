@@ -34,6 +34,8 @@ export default function Matchmaking() {
 
   const [profile, setProfile] = useState<ProfileType | null>(null);
 
+  const [sentRequests, setSentRequests] = useState<number[]>([]); // store receiver IDs
+
 
   const [selectedUser, setSelectedUser] = useState(null); // match.profile_username
   const [matchScore, setMatchScore] = useState(null);
@@ -76,6 +78,7 @@ export default function Matchmaking() {
     
   useEffect(() => {
     fetchProfile();
+   
   }, []);
 
   console.log("profile:",profile)
@@ -120,6 +123,69 @@ export default function Matchmaking() {
 
   console.log("matches:",matches)
 
+  const handleSendConnect = async (receiverId: number) => {
+  try {
+    const token =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    if (!token) {
+      Alert.alert("Error", "No access token found. Please log in.");
+      return;
+    }
+
+    const res = await fetch(`http://127.0.0.1:8000/friend-request/send/${receiverId}/`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.detail || "Failed to send friend request");
+    }
+
+    const data = await res.json();
+    console.log("Friend request sent:", data);
+    fetchSentRequests();
+    Alert.alert("✅ Success", "Friend request sent!");
+  } catch (error: any) {
+    console.error("Send Friend Request Error:", error);
+    Alert.alert("Error", error.message || "Could not send friend request.");
+  }
+};
+
+const fetchSentRequests = async () => {
+  try {
+    const token =
+      Platform.OS === "web"
+        ? localStorage.getItem("access_token")
+        : await SecureStore.getItemAsync("access_token");
+
+    if (!token) return;
+
+    const res = await fetch("http://127.0.0.1:8000/friend-request/sent/pending/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch sent requests");
+
+    const data = await res.json();
+
+    // Store all receiver profile IDs
+    const receiverIds = data.map((req) => req.receiver.id);
+    setSentRequests(receiverIds);
+  } catch (err) {
+    console.error("Fetch Sent Requests Error:", err);
+  }
+};
+
+
   const handleMatchScoreCheck = async (slug, matchUsername) => {
   try {
     const token =
@@ -147,10 +213,12 @@ export default function Matchmaking() {
 };
 
 console.log("selectedUser:",selectedUser);
+console.log("sentRequests:",sentRequests)
 
   // ✅ Automatically fetch on page load
   useEffect(() => {
     fetchMatches();
+    fetchSentRequests();
   }, []);
 
   return (
@@ -221,12 +289,22 @@ console.log("selectedUser:",selectedUser);
 
     {/* Action Buttons */}
     <View className="flex-row justify-between mt-4 space-x-3">
-      <TouchableOpacity
-        className="flex-1 bg-green-500 py-2 rounded-full items-center"
-        onPress={() => Alert.alert("Connect Request Sent!")}
-      >
-        <Text className="text-white font-semibold text-sm">🤝 Send Connect</Text>
-      </TouchableOpacity>
+   
+   {sentRequests.includes(match.profile) ? (
+        <TouchableOpacity
+          disabled
+          className="flex-1 bg-gray-400 py-2 rounded-full items-center"
+        >
+          <Text className="text-white font-semibold text-sm">✅ Already Sent</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          className="flex-1 bg-green-500 py-2 rounded-full items-center"
+          onPress={() => handleSendConnect(match.profile)}   // use profile id
+        >
+          <Text className="text-white font-semibold text-sm">🤝 Send Connect</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         className="flex-1 bg-purple-600 py-2 rounded-full items-center"
