@@ -74,6 +74,7 @@ export default function Navbar() {
     { label: "Meditations", path: "/meditations" },
     { label: "Films", path: "/films" },
     { label: "Connect", path: "/connect" },
+    { label: "Friend Request", path: "/FriendRequest" },
     { label: "Universal Laws", path: "/universal-laws" },
   ];
 
