@@ -652,3 +652,13 @@ class SentPendingFriendRequestsView(generics.ListAPIView):
         sender_profile = get_object_or_404(Profile, username=self.request.user)
         # Filter only pending requests
         return FriendRequest.objects.filter(sender=sender_profile, status="pending")
+
+class ReceivedPendingFriendRequestsView(generics.ListAPIView):
+    serializer_class = FriendRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get the receiver's profile for the logged-in user
+        receiver_profile = get_object_or_404(Profile, username=self.request.user)
+        # Filter only pending requests where the logged-in user is the receiver
+        return FriendRequest.objects.filter(receiver=receiver_profile, status="pending")
