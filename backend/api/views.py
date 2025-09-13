@@ -689,3 +689,68 @@ class CancelFriendRequestView(generics.DestroyAPIView):
             {"detail": "Friend request cancelled successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from .models import FriendRequest, Profile
+from .serializers import FriendRequestSerializer
+
+
+class AcceptFriendRequestView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FriendRequestSerializer
+
+    def put(self, request, *args, **kwargs):
+        friend_request_id = kwargs.get("pk")
+        receiver_profile = get_object_or_404(Profile, username=request.user)
+
+        # Only allow accept if this request is for the logged-in user
+        friend_request = get_object_or_404(
+            FriendRequest,
+            id=friend_request_id,
+            receiver=receiver_profile,
+            status="pending",
+        )
+
+        # ✅ Mark as accepted
+        friend_request.status = "accepted"
+        friend_request.save()
+
+        # ✅ Add both users into connections
+        sender_user = friend_request.sender.username  # User instance
+        receiver_user = receiver_profile.username     # User instance
+
+        receiver_profile.connections.add(sender_user)
+        friend_request.sender.connections.add(receiver_user)
+
+        return Response(
+            {"detail": "Friend request accepted successfully."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class RejectFriendRequestView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FriendRequestSerializer
+
+    def delete(self, request, *args, **kwargs):
+        friend_request_id = kwargs.get("pk")
+        receiver_profile = get_object_or_404(Profile, username=request.user)
+
+        # Only allow reject if this request is for the logged-in user
+        friend_request = get_object_or_404(
+            FriendRequest,
+            id=friend_request_id,
+            receiver=receiver_profile,
+            status="pending",
+        )
+
+        # ✅ Delete the request completely
+        friend_request.delete()
+
+        return Response(
+            {"detail": "Friend request rejected successfully."},
+            status=status.HTTP_200_OK,
+        )

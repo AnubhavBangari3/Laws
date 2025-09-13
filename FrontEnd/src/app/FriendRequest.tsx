@@ -100,15 +100,70 @@ export default function FriendRequest() {
     }
   };
 
-  const handleAccept = async (id: number) => {
-    Alert.alert("Accept", `Friend request ${id} accepted.`);
-    // TODO: call your backend accept API
-  };
+const handleAccept = async (id: number) => {
+  try {
+    let accessToken;
 
-  const handleReject = async (id: number) => {
-    Alert.alert("Reject", `Friend request ${id} rejected.`);
-    // TODO: call your backend reject API
-  };
+    if (Platform.OS === "web") {
+      accessToken = localStorage.getItem("access_token");
+    } else {
+      accessToken = await SecureStore.getItemAsync("access_token");
+    }
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/friend-request/${id}/accept/`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (response.ok) {
+      Alert.alert("Success", "Friend request accepted.");
+      fetchRequests(); // refresh list
+    } else {
+      const errorData = await response.json();
+      Alert.alert("Error", errorData.detail || "Could not accept request.");
+    }
+  } catch (error) {
+    console.error("Accept error:", error);
+    Alert.alert("Error", "Something went wrong while accepting.");
+  }
+};
+
+const handleReject = async (id: number) => {
+  try {
+    let accessToken;
+
+    if (Platform.OS === "web") {
+      accessToken = localStorage.getItem("access_token");
+    } else {
+      accessToken = await SecureStore.getItemAsync("access_token");
+    }
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/friend-request/${id}/reject/`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (response.ok) {
+      Alert.alert("Success", "Friend request rejected.");
+      fetchRequests(); // refresh list
+    } else {
+      const errorData = await response.json();
+      Alert.alert("Error", errorData.detail || "Could not reject request.");
+    }
+  } catch (error) {
+    console.error("Reject error:", error);
+    Alert.alert("Error", "Something went wrong while rejecting.");
+  }
+};
+
+
+
 
   if (loading) {
     return (
