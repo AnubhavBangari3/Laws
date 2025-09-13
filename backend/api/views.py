@@ -418,7 +418,16 @@ class RuleBasedProfileListView(APIView):
 
     def get(self, request):
         current_user = request.user
-        queryset = RuleBasedProfile.objects.exclude(profile__username=current_user)
+        # get logged-in user's profile
+        current_profile = get_object_or_404(Profile, username=current_user)
+
+        # get all User objects who are already in connections
+        friend_users = current_profile.connections.all()  # QuerySet of User
+
+        # exclude self + friends from RuleBasedProfile list
+        queryset = RuleBasedProfile.objects.exclude(profile__username=current_user)\
+                                           .exclude(profile__username__in=friend_users)
+
         serializer = RuleBasedProfileSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
