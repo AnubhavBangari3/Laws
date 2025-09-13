@@ -662,3 +662,30 @@ class ReceivedPendingFriendRequestsView(generics.ListAPIView):
         receiver_profile = get_object_or_404(Profile, username=self.request.user)
         # Filter only pending requests where the logged-in user is the receiver
         return FriendRequest.objects.filter(receiver=receiver_profile, status="pending")
+    
+class CancelFriendRequestView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = FriendRequestSerializer  
+
+    def delete(self, request, *args, **kwargs):
+        friend_request_id = kwargs.get("pk")
+
+        # Get profile of logged-in user
+        sender_profile = get_object_or_404(Profile, username=request.user)
+
+        # Ensure the friend request belongs to the logged-in user
+        friend_request = get_object_or_404(
+            FriendRequest,
+            id=friend_request_id,
+            sender=sender_profile,
+            status="pending",
+        )
+
+       
+        
+        friend_request.delete()
+
+        return Response(
+            {"detail": "Friend request cancelled successfully."},
+            status=status.HTTP_200_OK,
+        )

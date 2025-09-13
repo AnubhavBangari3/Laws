@@ -22,6 +22,46 @@ export default function FriendRequest() {
     fetchRequests();
   }, []);
 
+  const handleCancel = async (id: number) => {
+  try {
+    let accessToken;
+
+    if (Platform.OS === "web") {
+      accessToken = localStorage.getItem("access_token");
+    } else {
+      accessToken = await SecureStore.getItemAsync("access_token");
+    }
+
+    if (!accessToken) {
+      Alert.alert("Error", "No access token found. Please login again.");
+      return;
+    }
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/friend-request/${id}/cancel/`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (response.ok) {
+      Alert.alert("Success", "Friend request cancelled.");
+      // Refresh the requests list
+      fetchRequests();
+    } else {
+      const errorData = await response.json();
+      Alert.alert("Error", errorData.detail || "Could not cancel request.");
+    }
+  } catch (error) {
+    console.error("Cancel error:", error);
+    Alert.alert("Error", "Something went wrong while cancelling.");
+  }
+};
+
+
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -102,7 +142,12 @@ export default function FriendRequest() {
                 <Text className="text-lg font-semibold">{req.receiver?.profile_name}</Text>
                 <Text className="text-sm text-gray-500">{req.receiver?.email}</Text>
               </View>
-              <Text className="text-sm text-yellow-600 capitalize">{req.status}</Text>
+              <TouchableOpacity
+                className="bg-red-500 px-3 py-1 rounded-lg"
+                onPress={() => handleCancel(req.id)}
+              >
+                <Text className="text-white">Cancel</Text>
+              </TouchableOpacity>
             </View>
           ))
         ) : (

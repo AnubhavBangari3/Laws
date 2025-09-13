@@ -1,6 +1,7 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView,SendFriendRequestView,SentPendingFriendRequestsView,ReceivedPendingFriendRequestsView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView,SendFriendRequestView,SentPendingFriendRequestsView,ReceivedPendingFriendRequestsView,CancelFriendRequestView
+
 from rest_framework.routers import DefaultRouter
 
 
@@ -34,5 +35,6 @@ urlpatterns=[
     path("friend-request/send/<int:id>/", SendFriendRequestView.as_view(), name="send-friend-request"),
     path("friend-request/sent/pending/", SentPendingFriendRequestsView.as_view(), name="sent-pending-friend-requests"),
     path("friend-request/receive/pending/", ReceivedPendingFriendRequestsView.as_view(), name="sent-pending-friend-requests"),
+    path("friend-request/<int:pk>/cancel/", CancelFriendRequestView.as_view(), name="cancel-friend-request"),
 
     ]
