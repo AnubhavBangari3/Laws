@@ -766,3 +766,22 @@ class RejectFriendRequestView(generics.DestroyAPIView):
 '''
 FR end
 '''
+
+class FollowingCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, profile_id=None):
+        """
+        Returns the number of people the given profile user is following.
+        If no profile_id is provided, defaults to the logged-in user.
+        """
+        if profile_id:
+            profile = get_object_or_404(Profile, id=profile_id)
+        else:
+            profile = get_object_or_404(Profile, username=request.user)
+
+        following_count = profile.connections.count()
+        return Response({
+            "profile": profile.username.username,
+            "following_count": following_count
+        })

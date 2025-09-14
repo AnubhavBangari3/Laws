@@ -31,6 +31,9 @@ export default function Main() {
   const [email, setEmail] = useState('');
   const [about, setAbout] = useState('');
 
+  const [postCount, setPostCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
   const fetchProfile = async () => {
     try {
       const accessToken = Platform.OS === 'web'
@@ -64,6 +67,38 @@ export default function Main() {
       setLoading(false);
     }
   };
+
+  const fetchFollowingCount = async (profileId?: number) => {
+  try {
+    const accessToken = Platform.OS === 'web'
+      ? localStorage.getItem('access_token')
+      : await SecureStore.getItemAsync('access_token');
+
+    let url = "http://127.0.0.1:8000/profile/following-count/";
+    if (profileId) {
+      url = `http://127.0.0.1:8000/profile/${profileId}/following-count/`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch following count");
+    }
+
+    const data = await response.json();
+    console.log("Following Count:", data);
+    setFollowingCount(data.following_count);
+  } catch (error) {
+    console.error("Fetch Following Count Error:", error);
+  }
+};
+
 
   useEffect(() => {
     fetchProfile();
@@ -103,6 +138,38 @@ export default function Main() {
       Alert.alert('Error', 'Something went wrong while picking the image.');
     }
   };
+
+const fetchUserPostsCount = async (profileId: number) => {
+  try {
+    const accessToken = Platform.OS === 'web'
+      ? localStorage.getItem('access_token')
+      : await SecureStore.getItemAsync('access_token');
+
+    const response = await fetch("http://127.0.0.1:8000/blogs/", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch blogs");
+    }
+
+    const blogs = await response.json();
+    console.log("blogs:", blogs);
+
+    // ✅ Fix: compare blog.author directly with profileId
+    const count = blogs.filter((blog: any) => blog.author === profileId).length;
+    setPostCount(count);
+
+  } catch (error) {
+    console.error("Fetch Blogs Error:", error);
+  }
+};
+
+
 
   const uploadProfilePicture = async (selectedImage: { uri: string; type?: string; fileName?: string; }) => {
     try {
@@ -150,6 +217,13 @@ export default function Main() {
       Alert.alert('Error', error.message || 'Failed to upload profile picture.');
     }
   };
+
+  useEffect(() => {
+  if (profile) {
+    fetchUserPostsCount(profile.id);
+     fetchFollowingCount(profile.id);
+  }
+}, [profile]);
 
   const handleSaveProfile = async () => {
 
@@ -315,11 +389,11 @@ export default function Main() {
               <Text className="text-gray-600">Followers</Text>
             </View>
             <View className="items-center">
-              <Text className="text-xl font-bold">0</Text>
+              <Text className="text-xl font-bold">{postCount}</Text>
               <Text className="text-gray-600">Posts</Text>
             </View>
             <View className="items-center">
-              <Text className="text-xl font-bold">0</Text>
+              <Text className="text-xl font-bold">{followingCount}</Text>
               <Text className="text-gray-600">Following</Text>
             </View>
           </View>
@@ -335,9 +409,9 @@ export default function Main() {
           </View>
         )}
       </ScrollView>
-      <View>
+      {/* <View>
         <Text className="text-lg font-semibold mb-2">Recent Activities</Text>
-      </View>
+      </View> */}
     </View>
   );
 }
