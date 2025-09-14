@@ -620,6 +620,10 @@ class UserPersonalityProfileAPIView(APIView):
 '''
 Compatibility Score Models Matching end
 '''
+
+'''
+FR start
+'''
 class SendFriendRequestView(generics.CreateAPIView):
     serializer_class = FriendRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -700,11 +704,6 @@ class CancelFriendRequestView(generics.DestroyAPIView):
         )
 
 
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from .models import FriendRequest, Profile
-from .serializers import FriendRequestSerializer
 
 
 class AcceptFriendRequestView(generics.UpdateAPIView):
@@ -763,3 +762,7 @@ class RejectFriendRequestView(generics.DestroyAPIView):
             {"detail": "Friend request rejected successfully."},
             status=status.HTTP_200_OK,
         )
+    
+'''
+FR end
+'''
