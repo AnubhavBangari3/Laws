@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,FriendRequest
+from .models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,FriendRequest,VisionBoardItem
 # Register your models here.
 
 admin.site.register(Profile)
@@ -14,3 +14,4 @@ admin.site.register(PersonalityQuestion)
 admin.site.register(PersonalityAnswer)
 admin.site.register(UserPersonalityProfile)
 admin.site.register(FriendRequest)
+admin.site.register(VisionBoardItem)

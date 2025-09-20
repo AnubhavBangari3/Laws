@@ -4,8 +4,9 @@ from django.contrib.auth import authenticate,login
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 
-from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer,UserPersonalityProfileSerializer,FriendRequestSerializer
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,UserPersonalityProfile,FriendRequest
+from .serializers import LoginSerializer,RealizerSerializer,ProfileSerializer,BlogSerializer,AudiobookSerializer,MeditationSerializer,MovieSerializer,RuleBasedProfileSerializer,InterestSerializer,MatchPreferenceSerializer,PersonalityQuestionSerializer,PersonalityAnswerSerializer,UserPersonalityProfileSerializer,FriendRequestSerializer,VisionBoardItemSerializer
+
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,Interest,RuleBasedProfile,MatchPreference,PersonalityQuestion,PersonalityAnswer,UserPersonalityProfile,UserPersonalityProfile,FriendRequest,VisionBoardItem
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -785,3 +786,43 @@ class FollowingCountView(APIView):
             "profile": profile.username.username,
             "following_count": following_count
         })
+    
+class VisionBoardItemListCreateView(generics.ListCreateAPIView):
+    serializer_class = VisionBoardItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Get vision board items for the logged-in user
+        profile = get_object_or_404(Profile, username=self.request.user)
+        return VisionBoardItem.objects.filter(profile=profile).order_by('-created_at')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Allows posting multiple vision board items at once.
+        Expected input format:
+        [
+            {"text": "My vision 1", "image": <file>},
+            {"text": "My vision 2", "image": <file>}
+        ]
+        """
+        profile = get_object_or_404(Profile, username=request.user)
+        items_data = request.data
+
+        if not isinstance(items_data, list):
+            return Response({"error": "Expected a list of items."}, status=status.HTTP_400_BAD_REQUEST)
+
+        created_items = []
+        errors = []
+
+        for idx, item_data in enumerate(items_data):
+            serializer = VisionBoardItemSerializer(data=item_data)
+            if serializer.is_valid():
+                serializer.save(profile=profile)
+                created_items.append(serializer.data)
+            else:
+                errors.append({f"item_{idx}": serializer.errors})
+        print("created_items:",created_items)
+        if errors:
+            return Response({"created": created_items, "errors": errors}, status=status.HTTP_207_MULTI_STATUS)
+
+        return Response(created_items, status=status.HTTP_201_CREATED)

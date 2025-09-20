@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
-from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer,UserPersonalityProfile,FriendRequest
+from . models import Profile,Blogs,Audiobook,Meditation,Movie,RuleBasedProfile, Interest,MatchPreference,PersonalityQuestion, PersonalityAnswer,UserPersonalityProfile,FriendRequest,VisionBoardItem
 
 
 class LoginSerializer(serializers.Serializer):
@@ -277,3 +277,9 @@ class FriendRequestSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ("status", "created_at", "updated_at")
+
+class VisionBoardItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VisionBoardItem
+        fields = ['id', 'profile', 'text', 'image', 'created_at']
+        read_only_fields = ['id', 'created_at']

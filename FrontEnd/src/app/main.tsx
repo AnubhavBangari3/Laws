@@ -7,6 +7,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
 
+import { Dimensions } from "react-native";
+
+
+import Modal from "react-native-modal";
+
 interface ProfileType {
   id: number;
   username: number;
@@ -33,6 +38,13 @@ export default function Main() {
 
   const [postCount, setPostCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+
+  // Vision Board States
+const [isVisionModalVisible, setIsVisionModalVisible] = useState(false);
+const [visionItems, setVisionItems] = useState<{ id: number; text: string; uri: string }[]>([]);
+const [visionText, setVisionText] = useState('');
+const screenWidth = Dimensions.get("window").width;
+
 
   const fetchProfile = async () => {
     try {
@@ -96,6 +108,38 @@ export default function Main() {
     setFollowingCount(data.following_count);
   } catch (error) {
     console.error("Fetch Following Count Error:", error);
+  }
+};
+
+const handleAddVisionItem = async () => {
+  try {
+    // Pick Image
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need permission to access your gallery.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const selectedUri = result.assets[0].uri;
+      const newItem = {
+        id: Date.now(),
+        text: visionText,
+        uri: selectedUri,
+      };
+      setVisionItems(prev => [...prev, newItem]);
+      setVisionText('');
+    }
+  } catch (error) {
+    console.error(error);
+    Alert.alert("Error", "Something went wrong while adding the vision item.");
   }
 };
 
@@ -370,7 +414,7 @@ const fetchUserPostsCount = async (profileId: number) => {
                   </Pressable>
 
                   <Pressable
-                    onPress={() => router.push("/")}
+                    onPress={() => setIsVisionModalVisible(true)}
                     className="bg-yellow-400 px-4 py-3 rounded-full shadow-md"
                   >
                     <Text className="text-white font-bold text-center">Vision</Text>
@@ -409,6 +453,83 @@ const fetchUserPostsCount = async (profileId: number) => {
           </View>
         )}
       </ScrollView>
+
+      <Modal
+        isVisible={isVisionModalVisible}
+        onBackdropPress={() => setIsVisionModalVisible(false)}
+        style={{ margin: 0 }}
+      >
+        <View className="flex-1 bg-white p-4 rounded-lg">
+          <Text className="text-xl font-bold mb-4">Vision Board</Text>
+
+         <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            {visionItems.map(item => (
+              <View
+                key={item.id}
+                style={{
+                  width: (screenWidth - 48) / 2, // 2 columns
+                  marginBottom: 16,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  backgroundColor: '#f3f3f3',
+                }}
+              >
+                {/* Image */}
+                <Image
+                  source={{ uri: item.uri }}
+                  style={{
+                    width: '100%',
+                    height: 150, // or any height you prefer
+                  }}
+                  resizeMode="contain" // ensures full image is visible
+                />
+
+                {/* Text / Caption */}
+                {item.text ? (
+                  <View style={{ padding: 8, backgroundColor: '#fff' }}>
+                    <Text
+                      style={{
+                        color: '#374151',
+                        textAlign: 'center', // center the text
+                        fontSize: 14,
+                      }}
+                      numberOfLines={3} // limit text lines if too long
+                      ellipsizeMode="tail"
+                    >
+                      {item.text}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ))}
+          </View>
+
+
+        <TextInput
+          placeholder="Describe your vision..."
+          value={visionText}
+          onChangeText={setVisionText}
+          className="border-b border-gray-400 my-2 py-2"
+        />
+
+        <Pressable
+          onPress={handleAddVisionItem}
+          className="mt-4 bg-yellow-400 py-3 rounded-full"
+        >
+          <Text className="text-center text-white font-bold">Add Vision</Text>
+        </Pressable>
+      </ScrollView>
+
+
+          <Pressable
+            onPress={() => setIsVisionModalVisible(false)}
+            className="mt-4 py-3"
+          >
+            <Text className="text-center text-gray-500">Close</Text>
+          </Pressable>
+        </View>
+      </Modal>
       {/* <View>
         <Text className="text-lg font-semibold mb-2">Recent Activities</Text>
       </View> */}

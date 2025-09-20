@@ -252,3 +252,16 @@ class FriendRequest(models.Model):
 
     def __str__(self):
         return f"{self.sender} → {self.receiver} ({self.status})"
+
+class VisionBoardItem(models.Model):
+    profile = models.ForeignKey(
+        'Profile', 
+        on_delete=models.CASCADE, 
+        related_name='vision_items'
+    )
+    text = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='vision_board_images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Vision Item for {self.profile.username.username} - {self.text[:20]}"
