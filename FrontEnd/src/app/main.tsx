@@ -509,88 +509,87 @@ const fetchUserPostsCount = async (profileId: number) => {
       </ScrollView>
 
       <Modal
-        isVisible={isVisionModalVisible}
-        onBackdropPress={() => setIsVisionModalVisible(false)}
-        style={{ margin: 0 }}
-      >
-        <View className="flex-1 bg-white p-4 rounded-lg">
-          <Text className="text-xl font-bold mb-4">Vision Board</Text>
+  isVisible={isVisionModalVisible}
+  onBackdropPress={() => setIsVisionModalVisible(false)}
+  style={{ margin: 0 }}
+>
+  <View className="flex-1 bg-white p-4 rounded-lg">
+    <Text className="text-xl font-bold mb-4">Vision Board</Text>
 
-         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-            {visionItems.map(item => (
-              <View
-                key={item.id}
-                style={{
-                  width: (screenWidth - 48) / 2, // 2 columns
-                  marginBottom: 16,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  backgroundColor: '#f3f3f3',
-                }}
-              >
-                {/* Image */}
-                <Image
-                  source={{ uri: item.uri }}
-                  style={{
-                    width: '100%',
-                    height: 150, // or any height you prefer
-                  }}
-                  resizeMode="contain" // ensures full image is visible
-                />
+    <ScrollView showsVerticalScrollIndicator={false}>
+      
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        {visionItems.map(item => (
+         <View
+  key={item.id}
+  style={{
+    width: (screenWidth - 48) / 2,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f3f3f3',
+  }}
+>
+  {/* Image */}
+  <View style={{ width: '100%', aspectRatio: 1 }}> {/* Ensures square container */}
+    <Image
+      source={{ uri: item.uri }}
+      style={{ width: '100%', height: '100%' }}
+      resizeMode="cover" // cover ensures it fills container without distortion
+    />
+  </View>
 
-                {/* Text / Caption */}
-                {item.text ? (
-                  <View style={{ padding: 8, backgroundColor: '#fff' }}>
-                    <Text
-                      style={{
-                        color: '#374151',
-                        textAlign: 'center', // center the text
-                        fontSize: 14,
-                      }}
-                      numberOfLines={3} // limit text lines if too long
-                      ellipsizeMode="tail"
-                    >
-                      {item.text}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ))}
-          </View>
+  {/* Text / Caption */}
+  <View style={{ padding: 8, backgroundColor: '#fff' }}>
+    <Text
+      style={{ color: '#374151', textAlign: 'center', fontSize: 14 }}
+      numberOfLines={3}
+      ellipsizeMode="tail"
+    >
+      {item.text}
+    </Text>
+  </View>
+</View>
 
 
+        ))}
+      </View>
+
+      {/* New Vision Item */}
+      <View className="my-4 p-2 border rounded-lg bg-gray-50">
         <TextInput
           placeholder="Describe your vision..."
           value={visionText}
           onChangeText={setVisionText}
-          className="border-b border-gray-400 my-2 py-2"
+          className="border-b border-gray-400 py-2 mb-2"
         />
-
         <Pressable
           onPress={handleAddVisionItem}
-          className="mt-4 bg-yellow-400 py-3 rounded-full"
+          disabled={!visionText.trim()} // Disable if text is empty
+          className={`py-3 rounded-full ${visionText.trim() ? 'bg-yellow-400' : 'bg-gray-300'}`}
         >
           <Text className="text-center text-white font-bold">Add Vision</Text>
         </Pressable>
-        <Pressable
-          onPress={handlePostVisionItems}
-          className="mt-4 bg-green-500 py-3 rounded-full"
-        >
-          <Text className="text-center text-white font-bold">Post Vision</Text>
-        </Pressable>
+      </View>
 
-      </ScrollView>
+      <Pressable
+        onPress={handlePostVisionItems}
+        disabled={visionItems.length === 0}
+        className={`mt-4 py-3 rounded-full ${visionItems.length ? 'bg-green-500' : 'bg-gray-300'}`}
+      >
+        <Text className="text-center text-white font-bold">Post Vision</Text>
+      </Pressable>
+    </ScrollView>
 
+    <Pressable
+      onPress={() => setIsVisionModalVisible(false)}
+      className="mt-4 py-3"
+    >
+      <Text className="text-center text-gray-500">Close</Text>
+    </Pressable>
+  </View>
+</Modal>
 
-          <Pressable
-            onPress={() => setIsVisionModalVisible(false)}
-            className="mt-4 py-3"
-          >
-            <Text className="text-center text-gray-500">Close</Text>
-          </Pressable>
-        </View>
-      </Modal>
       {/* <View>
         <Text className="text-lg font-semibold mb-2">Recent Activities</Text>
       </View> */}
