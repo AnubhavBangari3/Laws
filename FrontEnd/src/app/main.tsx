@@ -79,6 +79,60 @@ const screenWidth = Dimensions.get("window").width;
       setLoading(false);
     }
   };
+const getAccessToken = async () => {
+  return Platform.OS === 'web'
+    ? localStorage.getItem('access_token')
+    : await SecureStore.getItemAsync('access_token');
+};
+
+const handlePostVisionItems = async () => {
+  if (visionItems.length === 0) {
+    Alert.alert("No Vision Items", "Please add at least one vision item before posting.");
+    return;
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) return Alert.alert("Error", "No access token found.");
+
+  const formData = new FormData();
+
+  if (Platform.OS === 'web') {
+    await Promise.all(
+      visionItems.map(async (item, index) => {
+        formData.append(`text_${index}`, item.text);
+        const res = await fetch(item.uri);
+        const blob = await res.blob();
+        const file = new File([blob], `vision_${Date.now()}_${index}.jpg`, { type: blob.type });
+        formData.append(`image_${index}`, file);
+      })
+    );
+  } else {
+    visionItems.forEach((item, index) => {
+      formData.append(`text_${index}`, item.text);
+      formData.append(`image_${index}`, {
+        uri: item.uri,
+        name: `vision_${Date.now()}_${index}.jpg`,
+        type: 'image/jpeg',
+      } as any);
+    });
+  }
+
+  const response = await fetch("http://127.0.0.1:8000/vision/", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    return Alert.alert("Error", JSON.stringify(errorData));
+  }
+
+  Alert.alert("Success", "Your vision items have been posted!");
+  setVisionItems([]);
+  setIsVisionModalVisible(false);
+};
+
 
   const fetchFollowingCount = async (profileId?: number) => {
   try {
@@ -519,6 +573,13 @@ const fetchUserPostsCount = async (profileId: number) => {
         >
           <Text className="text-center text-white font-bold">Add Vision</Text>
         </Pressable>
+        <Pressable
+          onPress={handlePostVisionItems}
+          className="mt-4 bg-green-500 py-3 rounded-full"
+        >
+          <Text className="text-center text-white font-bold">Post Vision</Text>
+        </Pressable>
+
       </ScrollView>
 
 

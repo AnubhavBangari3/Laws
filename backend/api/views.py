@@ -793,36 +793,48 @@ class VisionBoardItemListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         # Get vision board items for the logged-in user
-        profile = get_object_or_404(Profile, username=self.request.user)
-        return VisionBoardItem.objects.filter(profile=profile).order_by('-created_at')
+        return VisionBoardItem.objects.filter(profile__user=self.request.user).order_by('-created_at')
 
-    def post(self, request, *args, **kwargs):
-        """
-        Allows posting multiple vision board items at once.
-        Expected input format:
-        [
-            {"text": "My vision 1", "image": <file>},
-            {"text": "My vision 2", "image": <file>}
-        ]
-        """
-        profile = get_object_or_404(Profile, username=request.user)
-        items_data = request.data
+    def create(self, request, *args, **kwargs):
+        items = []
+        idx = 0
+        
+        # Extract items from request data
+        while True:
+            text_key = f"text_{idx}"
+            image_key = f"image_{idx}"
 
-        if not isinstance(items_data, list):
-            return Response({"error": "Expected a list of items."}, status=status.HTTP_400_BAD_REQUEST)
+            if text_key not in request.data and image_key not in request.FILES:
+                break
+
+            items.append({
+                "text": request.data.get(text_key, ""),
+                "image": request.FILES.get(image_key)
+            })
+            idx += 1
+
+        if not items:
+            return Response({"error": "No vision items provided."}, status=status.HTTP_400_BAD_REQUEST)
 
         created_items = []
         errors = []
 
-        for idx, item_data in enumerate(items_data):
-            serializer = VisionBoardItemSerializer(data=item_data)
+        for i, item_data in enumerate(items):
+            # Create serializer with context to access request
+            serializer = self.get_serializer(data=item_data)
+            profile_user=get_object_or_404(Profile, username=request.user)
             if serializer.is_valid():
-                serializer.save(profile=profile)
+                # Save with the user's profile
+                serializer.save(profile=profile_user)
                 created_items.append(serializer.data)
             else:
-                errors.append({f"item_{idx}": serializer.errors})
+                errors.append({f"item_{i}": serializer.errors})
+                print(f"Item {i} errors: {serializer.errors}")  
         print("created_items:",created_items)
         if errors:
-            return Response({"created": created_items, "errors": errors}, status=status.HTTP_207_MULTI_STATUS)
+            return Response(
+                {"created": created_items, "errors": errors}, 
+                status=status.HTTP_207_MULTI_STATUS
+            )
 
         return Response(created_items, status=status.HTTP_201_CREATED)

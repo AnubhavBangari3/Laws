@@ -282,4 +282,4 @@ class VisionBoardItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisionBoardItem
         fields = ['id', 'profile', 'text', 'image', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'profile','created_at']
