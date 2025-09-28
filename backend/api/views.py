@@ -838,3 +838,18 @@ class VisionBoardItemListCreateView(generics.ListCreateAPIView):
             )
 
         return Response(created_items, status=status.HTTP_201_CREATED)
+
+class VisionBoardItemListView(generics.ListAPIView):
+    """
+    API view to list all vision board items of the logged-in user,
+    ordered from newest to oldest.
+    """
+    serializer_class = VisionBoardItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Return vision board items for the logged-in user,
+        ordered by creation date descending (newest first).
+        """
+        return VisionBoardItem.objects.filter(profile__user=self.request.user).order_by('-created_at')
