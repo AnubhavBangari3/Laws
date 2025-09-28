@@ -199,6 +199,7 @@ const handleAddVisionItem = async () => {
 
 
   useEffect(() => {
+    fetchVisionBoardItems();
     fetchProfile();
   }, []);
 
@@ -315,6 +316,40 @@ const fetchUserPostsCount = async (profileId: number) => {
       Alert.alert('Error', error.message || 'Failed to upload profile picture.');
     }
   };
+
+  const fetchVisionBoardItems = async () => {
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
+
+    const response = await fetch("http://127.0.0.1:8000/visionget/", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.detail || "Failed to fetch vision items");
+    }
+
+    const data = await response.json();
+    console.log("Vison data:",data);
+    // Map API data to match your visionItems format
+    const formatted = data.map((item: any) => ({
+      id: item.id,
+      text: item.text,
+      uri: `http://127.0.0.1:8000${item.image}`,
+    }));
+    setVisionItems(formatted);
+  } catch (error: any) {
+    console.error("Fetch Vision Items Error:", error);
+    Alert.alert("Error", error.message || "Could not fetch vision items.");
+  }
+};
+
 
   useEffect(() => {
   if (profile) {

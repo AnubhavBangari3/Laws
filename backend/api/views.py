@@ -852,4 +852,5 @@ class VisionBoardItemListView(generics.ListAPIView):
         Return vision board items for the logged-in user,
         ordered by creation date descending (newest first).
         """
-        return VisionBoardItem.objects.filter(profile__user=self.request.user).order_by('-created_at')
+        profile_user=get_object_or_404(Profile, username=self.request.user)
+        return VisionBoardItem.objects.filter(profile=profile_user).order_by('-created_at')
