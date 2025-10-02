@@ -1,4 +1,4 @@
-import { View, Text, Image, ActivityIndicator, ScrollView, Alert, Pressable, Platform, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, Image, ActivityIndicator, ScrollView, Alert, Pressable, Platform, TouchableOpacity, TextInput,FlatList } from "react-native";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 
@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as SecureStore from 'expo-secure-store';
+
 
 import { Dimensions } from "react-native";
 
@@ -44,7 +45,15 @@ const [isVisionModalVisible, setIsVisionModalVisible] = useState(false);
 const [visionItems, setVisionItems] = useState<{ id: number; text: string; uri: string }[]>([]);
 const [visionText, setVisionText] = useState('');
 const screenWidth = Dimensions.get("window").width;
+const [selectedVision, setSelectedVision] = useState<{ uri: string, text: string } | null>(null);
+// Add state at top
+const [isVisionBoardModalVisible, setIsVisionBoardModalVisible] = useState(false);
 
+
+
+const openVisionItemModal = (item: any) => {
+  setSelectedVision(item);
+};
 
   const fetchProfile = async () => {
     try {
@@ -117,20 +126,32 @@ const handlePostVisionItems = async () => {
     });
   }
 
-  const response = await fetch("http://127.0.0.1:8000/vision/", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}` },
-    body: formData,
-  });
+  try {
+    const response = await fetch("http://127.0.0.1:8000/vision/", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: formData,
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    return Alert.alert("Error", JSON.stringify(errorData));
+    if (!response.ok) {
+      const errorData = await response.json();
+      return Alert.alert("Error", JSON.stringify(errorData));
+    }
+
+    // ✅ Clear the vision modal state after successful post
+    setVisionItems([]);
+    setVisionText('');
+    setIsVisionModalVisible(false);
+
+    Alert.alert("Success", "Your vision items have been posted!");
+    
+    // ✅ Refresh the main Vision Board separately (for viewing)
+    fetchVisionBoardItems();
+    
+  } catch (error: any) {
+    console.error("Post Vision Error:", error);
+    Alert.alert("Error", error.message || "Failed to post vision items.");
   }
-
-  Alert.alert("Success", "Your vision items have been posted!");
-  setVisionItems([]);
-  setIsVisionModalVisible(false);
 };
 
 
@@ -341,7 +362,7 @@ const fetchUserPostsCount = async (profileId: number) => {
     const formatted = data.map((item: any) => ({
       id: item.id,
       text: item.text,
-      uri: `http://127.0.0.1:8000${item.image}`,
+      uri: item.image,
     }));
     setVisionItems(formatted);
   } catch (error: any) {
@@ -508,6 +529,13 @@ const fetchUserPostsCount = async (profileId: number) => {
                   >
                     <Text className="text-white font-bold text-center">Vision</Text>
                   </Pressable>
+
+                  <Pressable
+                  onPress={() => setIsVisionBoardModalVisible(true)}
+                  className="bg-yellow-400 px-4 py-3 rounded-full shadow-md"
+                >
+                  <Text className="text-white font-bold text-center">View Vision Boards</Text>
+                </Pressable>
               </View>
 
             </>
@@ -529,6 +557,9 @@ const fetchUserPostsCount = async (profileId: number) => {
               <Text className="text-xl font-bold">{followingCount}</Text>
               <Text className="text-gray-600">Following</Text>
             </View>
+
+            
+
           </View>
         )}
 
@@ -543,79 +574,62 @@ const fetchUserPostsCount = async (profileId: number) => {
         )}
       </ScrollView>
 
-      <Modal
+
+<Modal
   isVisible={isVisionModalVisible}
   onBackdropPress={() => setIsVisionModalVisible(false)}
   style={{ margin: 0 }}
 >
   <View className="flex-1 bg-white p-4 rounded-lg">
-    <Text className="text-xl font-bold mb-4">Vision Board</Text>
+    <Text className="text-xl font-bold mb-4">Add Vision Item</Text>
 
-    <ScrollView showsVerticalScrollIndicator={false}>
-      
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-        {visionItems.map(item => (
-         <View
-  key={item.id}
-  style={{
-    width: (screenWidth - 48) / 2,
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#f3f3f3',
-  }}
->
-  {/* Image */}
-  <View style={{ width: '100%', aspectRatio: 1 }}> {/* Ensures square container */}
-    <Image
-      source={{ uri: item.uri }}
-      style={{ width: '100%', height: '100%' }}
-      resizeMode="cover" // cover ensures it fills container without distortion
+    {/* Vision Text Input */}
+    <TextInput
+      value={visionText}
+      onChangeText={setVisionText}
+      placeholder="Enter your vision"
+      className="border-b border-gray-400 mb-4 py-2 px-2"
     />
-  </View>
 
-  {/* Text / Caption */}
-  <View style={{ padding: 8, backgroundColor: '#fff' }}>
-    <Text
-      style={{ color: '#374151', textAlign: 'center', fontSize: 14 }}
-      numberOfLines={3}
-      ellipsizeMode="tail"
-    >
-      {item.text}
-    </Text>
-  </View>
-</View>
-
-
-        ))}
-      </View>
-
-      {/* New Vision Item */}
-      <View className="my-4 p-2 border rounded-lg bg-gray-50">
-        <TextInput
-          placeholder="Describe your vision..."
-          value={visionText}
-          onChangeText={setVisionText}
-          className="border-b border-gray-400 py-2 mb-2"
-        />
-        <Pressable
-          onPress={handleAddVisionItem}
-          disabled={!visionText.trim()} // Disable if text is empty
-          className={`py-3 rounded-full ${visionText.trim() ? 'bg-yellow-400' : 'bg-gray-300'}`}
-        >
-          <Text className="text-center text-white font-bold">Add Vision</Text>
-        </Pressable>
-      </View>
-
+    {/* Show Add Image button only if visionText is not empty */}
+    {visionText.trim().length > 0 && (
       <Pressable
-        onPress={handlePostVisionItems}
-        disabled={visionItems.length === 0}
-        className={`mt-4 py-3 rounded-full ${visionItems.length ? 'bg-green-500' : 'bg-gray-300'}`}
+        onPress={handleAddVisionItem}
+        className="bg-yellow-400 py-3 rounded-full mb-4"
       >
-        <Text className="text-center text-white font-bold">Post Vision</Text>
+        <Text className="text-center text-white font-bold">Pick Image & Add</Text>
       </Pressable>
-    </ScrollView>
+    )}
 
+    {/* Show Added Vision Items */}
+    <FlatList
+      data={visionItems}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => (
+        <View className="flex-row items-center mb-2">
+          <Image
+            source={{ uri: item.uri }}
+            style={{ width: 50, height: 50, borderRadius: 8, marginRight: 10 }}
+          />
+          <Text className="flex-1">{item.text}</Text>
+        </View>
+      )}
+      ListEmptyComponent={
+        <Text className="text-gray-500 text-center mt-4">
+          No vision items added yet.
+        </Text>
+      }
+    />
+
+    {/* Post Vision Items Button */}
+    <Pressable
+  onPress={handlePostVisionItems} // No extra setVisionItems here
+  className="bg-green-500 py-3 rounded-full mt-4"
+>
+  <Text className="text-center text-white font-bold">Post Vision Items</Text>
+</Pressable>
+
+    {/* Close Modal */}
     <Pressable
       onPress={() => setIsVisionModalVisible(false)}
       className="mt-4 py-3"
@@ -625,9 +639,71 @@ const fetchUserPostsCount = async (profileId: number) => {
   </View>
 </Modal>
 
-      {/* <View>
-        <Text className="text-lg font-semibold mb-2">Recent Activities</Text>
-      </View> */}
+     <Modal
+  isVisible={isVisionBoardModalVisible}
+  onBackdropPress={() => setIsVisionBoardModalVisible(false)}
+  style={{ margin: 0 }}
+>
+  <View className="flex-1 bg-white p-4 rounded-lg">
+    <Text className="text-xl font-bold mb-4">Vision Boards</Text>
+
+    <FlatList
+      data={visionItems}
+      keyExtractor={(item) => item.id.toString()}
+      numColumns={2}
+      columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 16 }}
+      contentContainerStyle={{ paddingBottom: 100 }}
+      renderItem={({ item }) => (
+        <TouchableOpacity
+          onPress={() => openVisionItemModal(item)}
+          style={{
+            width: (screenWidth - 48) / 2,
+            borderRadius: 12,
+            overflow: 'hidden',
+            backgroundColor: '#f3f3f3',
+          }}
+        >
+          {/* Image */}
+          <View style={{ width: '100%', aspectRatio: 1 }}>
+            <Image
+              source={{ uri: item.uri }}   // ✅ Corrected property
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
+          </View>
+
+          {/* Caption */}
+          <View style={{ padding: 8, backgroundColor: '#fff' }}>
+            <Text
+              style={{ textAlign: 'center', fontSize: 14, color: '#374151' }}
+              numberOfLines={3}
+              ellipsizeMode="tail"
+            >
+              {item.text}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      ListEmptyComponent={
+        <Text className="text-gray-500 text-center mt-4">
+          No vision board items yet.
+        </Text>
+      }
+    />
+
+    <Pressable
+      onPress={() => setIsVisionBoardModalVisible(false)}
+      className="mt-4 py-3"
+    >
+      <Text className="text-center text-gray-500">Close</Text>
+    </Pressable>
+  </View>
+</Modal>
+
+
+
+    
+     
     </View>
   );
 }
