@@ -634,62 +634,77 @@ const fetchVisionBoardItems = async () => {
 </Modal>
 
 
-   <Modal
+<Modal
   isVisible={isVisionBoardModalVisible}
   onBackdropPress={() => setIsVisionBoardModalVisible(false)}
   style={{ margin: 0 }}
 >
-  <View className="flex-1 bg-white p-4 rounded-lg">
-    <Text className="text-xl font-bold mb-4">Vision Boards</Text>
+  <ScrollView className="flex-1 bg-[#fefcf9] p-4 rounded-lg">
+    <Text className="text-2xl font-extrabold mb-6 text-center text-[#333]">
+      ✨ My Vision Board ✨
+    </Text>
 
-    <FlatList
-      data={visionBoardItems}
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={2}
-      columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 16 }}
-      contentContainerStyle={{ paddingBottom: 100 }}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          onPress={() => openVisionItemModal(item)}
+    <View className="flex-row flex-wrap justify-center">
+  {visionBoardItems.map((item, index) => {
+    const rotation = index % 2 === 0 ? "-2deg" : "3deg";
+    const bgColors = ["#fffbe6", "#fce7f3", "#e0f7fa", "#f3e8ff", "#e8f5e9"];
+    const bgColor = bgColors[index % bgColors.length];
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        onPress={() => openVisionItemModal(item)}
+        style={{
+          width: 120, // fixed size
+          height: 150, // fixed card height
+          margin: 8,
+          borderRadius: 12,
+          overflow: "hidden",
+          transform: [{ rotate: rotation }],
+          backgroundColor: bgColor,
+          shadowColor: "#000",
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 5,
+        }}
+      >
+        <Image
+          source={{ uri: item.uri }}
           style={{
-            width: (screenWidth - 48) / 2,
-            borderRadius: 12,
-            overflow: 'hidden',
-            backgroundColor: '#f3f3f3',
+            width: "100%",
+            height: 100, // fixed image height
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
           }}
-        >
-          <View style={{ width: '100%', aspectRatio: 1 }}>
-            <Image
-              source={{ uri: item.uri }}
-              style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
-            />
-          </View>
-          <View style={{ padding: 8, backgroundColor: '#fff' }}>
-            <Text
-              style={{ textAlign: 'center', fontSize: 14, color: '#374151' }}
-              numberOfLines={3}
-              ellipsizeMode="tail"
-            >
-              {item.text}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
-      ListEmptyComponent={
-        <Text className="text-gray-500 text-center mt-4">
-          No vision board items yet.
-        </Text>
-      }
-    />
+          resizeMode="cover"
+        />
+        <View style={{ padding: 6 }}>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 12,
+              fontWeight: "600",
+              color: "#222",
+            }}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {item.text}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  })}
+</View>
 
     <Pressable
       onPress={() => setIsVisionBoardModalVisible(false)}
-      className="mt-4 py-3"
+      className="mt-6 py-3 rounded-full bg-gray-200"
     >
-      <Text className="text-center text-gray-500">Close</Text>
+      <Text className="text-center text-gray-700 font-semibold">Close</Text>
     </Pressable>
-  </View>
+  </ScrollView>
 </Modal>
 
 
