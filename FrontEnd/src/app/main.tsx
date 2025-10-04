@@ -42,11 +42,12 @@ export default function Main() {
 
   // Vision Board States
 const [isVisionModalVisible, setIsVisionModalVisible] = useState(false);
-const [visionItems, setVisionItems] = useState<{ id: number; text: string; uri: string }[]>([]);
+const [visionDraftItems, setVisionDraftItems] = useState<{ id: number; text: string; uri: string }[]>([]);
 const [visionText, setVisionText] = useState('');
+const [visionItems, setVisionItems] = useState<{ id: number; text: string; uri: string }[]>([]);
+const [visionBoardItems, setVisionBoardItems] = useState<{ id: number; text: string; uri: string }[]>([]);
 const screenWidth = Dimensions.get("window").width;
 const [selectedVision, setSelectedVision] = useState<{ uri: string, text: string } | null>(null);
-// Add state at top
 const [isVisionBoardModalVisible, setIsVisionBoardModalVisible] = useState(false);
 
 
@@ -95,7 +96,7 @@ const getAccessToken = async () => {
 };
 
 const handlePostVisionItems = async () => {
-  if (visionItems.length === 0) {
+  if (visionDraftItems.length === 0) {
     Alert.alert("No Vision Items", "Please add at least one vision item before posting.");
     return;
   }
@@ -107,7 +108,7 @@ const handlePostVisionItems = async () => {
 
   if (Platform.OS === 'web') {
     await Promise.all(
-      visionItems.map(async (item, index) => {
+      visionDraftItems.map(async (item, index) => {
         formData.append(`text_${index}`, item.text);
         const res = await fetch(item.uri);
         const blob = await res.blob();
@@ -116,7 +117,7 @@ const handlePostVisionItems = async () => {
       })
     );
   } else {
-    visionItems.forEach((item, index) => {
+    visionDraftItems.forEach((item, index) => {
       formData.append(`text_${index}`, item.text);
       formData.append(`image_${index}`, {
         uri: item.uri,
@@ -138,15 +139,13 @@ const handlePostVisionItems = async () => {
       return Alert.alert("Error", JSON.stringify(errorData));
     }
 
-    // ✅ Clear the vision modal state after successful post
-    setVisionItems([]);
+    // ✅ Clear drafts after successful post
+    setVisionDraftItems([]);
     setVisionText('');
     setIsVisionModalVisible(false);
 
     Alert.alert("Success", "Your vision items have been posted!");
-    
-    // ✅ Refresh the main Vision Board separately (for viewing)
-    fetchVisionBoardItems();
+    fetchVisionBoardItems(); // refresh saved items
     
   } catch (error: any) {
     console.error("Post Vision Error:", error);
@@ -188,7 +187,6 @@ const handlePostVisionItems = async () => {
 
 const handleAddVisionItem = async () => {
   try {
-    // Pick Image
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Denied', 'We need permission to access your gallery.');
@@ -209,7 +207,7 @@ const handleAddVisionItem = async () => {
         text: visionText,
         uri: selectedUri,
       };
-      setVisionItems(prev => [...prev, newItem]);
+      setVisionDraftItems(prev => [...prev, newItem]);  // ✅ store only in drafts
       setVisionText('');
     }
   } catch (error) {
@@ -338,7 +336,7 @@ const fetchUserPostsCount = async (profileId: number) => {
     }
   };
 
-  const fetchVisionBoardItems = async () => {
+const fetchVisionBoardItems = async () => {
   try {
     const accessToken = await getAccessToken();
     if (!accessToken) return;
@@ -357,14 +355,14 @@ const fetchUserPostsCount = async (profileId: number) => {
     }
 
     const data = await response.json();
-    console.log("Vison data:",data);
-    // Map API data to match your visionItems format
+    console.log("Vision data:", data);
+
     const formatted = data.map((item: any) => ({
       id: item.id,
       text: item.text,
       uri: item.image,
     }));
-    setVisionItems(formatted);
+    setVisionBoardItems(formatted); // ✅ update only saved board
   } catch (error: any) {
     console.error("Fetch Vision Items Error:", error);
     Alert.alert("Error", error.message || "Could not fetch vision items.");
@@ -583,7 +581,6 @@ const fetchUserPostsCount = async (profileId: number) => {
   <View className="flex-1 bg-white p-4 rounded-lg">
     <Text className="text-xl font-bold mb-4">Add Vision Item</Text>
 
-    {/* Vision Text Input */}
     <TextInput
       value={visionText}
       onChangeText={setVisionText}
@@ -591,7 +588,6 @@ const fetchUserPostsCount = async (profileId: number) => {
       className="border-b border-gray-400 mb-4 py-2 px-2"
     />
 
-    {/* Show Add Image button only if visionText is not empty */}
     {visionText.trim().length > 0 && (
       <Pressable
         onPress={handleAddVisionItem}
@@ -601,9 +597,9 @@ const fetchUserPostsCount = async (profileId: number) => {
       </Pressable>
     )}
 
-    {/* Show Added Vision Items */}
+    {/* Show Draft Items */}
     <FlatList
-      data={visionItems}
+      data={visionDraftItems}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
         <View className="flex-row items-center mb-2">
@@ -621,15 +617,13 @@ const fetchUserPostsCount = async (profileId: number) => {
       }
     />
 
-    {/* Post Vision Items Button */}
     <Pressable
-  onPress={handlePostVisionItems} // No extra setVisionItems here
-  className="bg-green-500 py-3 rounded-full mt-4"
->
-  <Text className="text-center text-white font-bold">Post Vision Items</Text>
-</Pressable>
+      onPress={handlePostVisionItems}
+      className="bg-green-500 py-3 rounded-full mt-4"
+    >
+      <Text className="text-center text-white font-bold">Post Vision Items</Text>
+    </Pressable>
 
-    {/* Close Modal */}
     <Pressable
       onPress={() => setIsVisionModalVisible(false)}
       className="mt-4 py-3"
@@ -639,7 +633,8 @@ const fetchUserPostsCount = async (profileId: number) => {
   </View>
 </Modal>
 
-     <Modal
+
+   <Modal
   isVisible={isVisionBoardModalVisible}
   onBackdropPress={() => setIsVisionBoardModalVisible(false)}
   style={{ margin: 0 }}
@@ -648,7 +643,7 @@ const fetchUserPostsCount = async (profileId: number) => {
     <Text className="text-xl font-bold mb-4">Vision Boards</Text>
 
     <FlatList
-      data={visionItems}
+      data={visionBoardItems}
       keyExtractor={(item) => item.id.toString()}
       numColumns={2}
       columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 16 }}
@@ -663,16 +658,13 @@ const fetchUserPostsCount = async (profileId: number) => {
             backgroundColor: '#f3f3f3',
           }}
         >
-          {/* Image */}
           <View style={{ width: '100%', aspectRatio: 1 }}>
             <Image
-              source={{ uri: item.uri }}   // ✅ Corrected property
+              source={{ uri: item.uri }}
               style={{ width: '100%', height: '100%' }}
               resizeMode="cover"
             />
           </View>
-
-          {/* Caption */}
           <View style={{ padding: 8, backgroundColor: '#fff' }}>
             <Text
               style={{ textAlign: 'center', fontSize: 14, color: '#374151' }}
@@ -699,6 +691,7 @@ const fetchUserPostsCount = async (profileId: number) => {
     </Pressable>
   </View>
 </Modal>
+
 
 
 
