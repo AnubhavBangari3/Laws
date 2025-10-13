@@ -341,7 +341,7 @@ export default function UniversalLawsPage() {
                     borderRadius: 12,
                     marginBottom: 10,
                   }}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
 
                 <Text className="text-xl font-bold text-center text-gray-800">
