@@ -283,4 +283,4 @@ class VisionBoardOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Order of '{self.vision_item.text[:20]}' by {self.profile.username.username} on {self.order_date}"
+        return f"Order of '{self.vision_item.text[:20]}' on {self.order_date}"

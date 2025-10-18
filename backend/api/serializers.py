@@ -295,4 +295,4 @@ class VisionBoardOrderSerializer(serializers.ModelSerializer):
             "order_delivered",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at","profile","vision_item"]
+        read_only_fields = ["id", "created_at", "profile"]

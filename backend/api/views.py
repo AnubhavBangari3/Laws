@@ -866,6 +866,31 @@ class VisionBoardOrderCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         # Automatically associate the logged-in user and vision_item from the request data
-        profile = self.request.user.profile  # Assumes User has OneToOne to Profile
-        vision_item = serializer.validated_data.get('vision_item')
+        profile = get_object_or_404(Profile, username=self.request.user)
+
+        vision_item_id = self.request.data.get("vision_item")
+        if not vision_item_id:
+            raise ValueError("Missing vision_item in request body")
+
+        try:
+            vision_item = VisionBoardItem.objects.get(id=vision_item_id)
+        except VisionBoardItem.DoesNotExist:
+            return Response({"error": "Invalid vision_item ID"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(profile=profile, vision_item=vision_item)
+
+class VisionBoardBookView(generics.ListAPIView):
+    """
+    API view to list all vision board items of the logged-in user,
+    ordered from newest to oldest.
+    """
+    serializer_class = VisionBoardOrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Return vision board items for the logged-in user,
+        ordered by creation date descending (newest first).
+        """
+        profile_user=get_object_or_404(Profile, username=self.request.user)
+        return VisionBoardOrder.objects.filter(profile=profile_user).order_by('-created_at')
