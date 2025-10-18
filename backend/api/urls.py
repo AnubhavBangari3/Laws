@@ -1,6 +1,6 @@
 from django.urls import path,include
 
-from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView,SendFriendRequestView,SentPendingFriendRequestsView,ReceivedPendingFriendRequestsView,CancelFriendRequestView,AcceptFriendRequestView, RejectFriendRequestView,FollowingCountView,VisionBoardItemListCreateView,VisionBoardItemListView
+from .views import RegisterView,LogoutView,ProfileView,ProfilePictureUpdateView,fetch_audiobook,BlogListCreateAPIView,BlogRetrieveUpdateAPIView,BlogLikeToggleAPIView,BlogLikeStatusAPIView,Like_audiobook,LikeMeditationAPIView,MovieLikeAPIView,CreateRuleBasedProfileView,RuleBasedProfileRetrieveView,UpdateRuleBasedProfileView,RuleBasedProfileRemoveInterestView,RuleBasedProfileListView,MatchPreferenceAPIView,MatchingScoreAPIView,PersonalityQuestionListView,PersonalityAnswerBulkAPIView,UserPersonalityProfileAPIView,SendFriendRequestView,SentPendingFriendRequestsView,ReceivedPendingFriendRequestsView,CancelFriendRequestView,AcceptFriendRequestView, RejectFriendRequestView,FollowingCountView,VisionBoardItemListCreateView,VisionBoardItemListView,VisionBoardOrderCreateView
 
 from rest_framework.routers import DefaultRouter
 
@@ -41,5 +41,5 @@ urlpatterns=[
     path("profile/<int:profile_id>/following-count/", FollowingCountView.as_view(), name="following-count"),
     path("vision/",VisionBoardItemListCreateView.as_view(),name="vision"),
     path("visionget/",VisionBoardItemListView.as_view(),name="visionget"),
-    
+    path("visionorder/",VisionBoardOrderCreateView.as_view(),name="visionorder"),
     ]

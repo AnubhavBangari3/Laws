@@ -184,6 +184,16 @@ const toggleLike = async (productId: string) => {
     []
   );
 
+  const generateHexColor = () => {
+  const letters = "0123456789ABCDEF";
+  let color = "";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
+
   return (
     <View style={styles.container}>
       <Navbar />
@@ -216,14 +226,13 @@ const toggleLike = async (productId: string) => {
                   >
                     <View style={styles.imageContainer}>
                       <Image
-                        source={{
-                          uri:
-                            audiobook.image ||
-                            "https://png.pngtree.com/thumb_back/fw800/background/20240527/pngtree-audio-book-concept-image-hd-image_15732306.jpg",
-                        }}
-                        style={styles.image}
-                        resizeMode="cover"
-                      />
+  source={{
+    uri: `https://dummyimage.com/400x600/${generateHexColor()}/ffffff&text=${encodeURIComponent(audiobook.title)}`
+  }}
+  style={styles.image}
+  resizeMode="cover"
+/>
+
                       <View style={styles.ratingBadge}>
                         <Ionicons name="star" size={12} color="#FFD700" />
                         <Text style={styles.ratingText}>

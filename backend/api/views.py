@@ -854,3 +854,18 @@ class VisionBoardItemListView(generics.ListAPIView):
         """
         profile_user=get_object_or_404(Profile, username=self.request.user)
         return VisionBoardItem.objects.filter(profile=profile_user).order_by('-created_at')
+    
+from rest_framework import generics, permissions
+from .models import VisionBoardOrder
+from .serializers import VisionBoardOrderSerializer
+
+class VisionBoardOrderCreateView(generics.CreateAPIView):
+    queryset = VisionBoardOrder.objects.all()
+    serializer_class = VisionBoardOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Automatically associate the logged-in user and vision_item from the request data
+        profile = self.request.user.profile  # Assumes User has OneToOne to Profile
+        vision_item = serializer.validated_data.get('vision_item')
+        serializer.save(profile=profile, vision_item=vision_item)

@@ -265,3 +265,22 @@ class VisionBoardItem(models.Model):
 
     def __str__(self):
         return f"Vision Item for {self.profile.username.username} - {self.text[:20]}"
+    
+class VisionBoardOrder(models.Model):
+    profile = models.ForeignKey(
+        'Profile',
+        on_delete=models.CASCADE,
+        related_name='vision_orders'
+    )
+    vision_item = models.ForeignKey(
+        'VisionBoardItem',
+        on_delete=models.CASCADE,
+        related_name='orders'
+    )
+    order_date = models.DateField()
+    order_delivered = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order of '{self.vision_item.text[:20]}' by {self.profile.username.username} on {self.order_date}"
