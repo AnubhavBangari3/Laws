@@ -140,20 +140,25 @@ export default function UniversalLawsPage() {
     setManifestModalVisible(true);
   };
 
-  const openDatePicker = () => {
-    if (Platform.OS === "android") {
-      DateTimePickerAndroid.open({
-        value: manifestDate || new Date(),
-        mode: "date",
-        minimumDate: new Date(),
-        onChange: (event, date) => {
-          if (date) setManifestDate(date);
-        },
-      });
-    } else {
-      setShowDatePicker(true);
-    }
-  };
+// 🗓️ Open Date Picker
+const openDatePicker = () => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1); // ✅ only future date (not today)
+
+  if (Platform.OS === "android") {
+    DateTimePickerAndroid.open({
+      value: manifestDate || tomorrow,
+      mode: "date",
+      minimumDate: tomorrow, // ✅ block past & today
+      onChange: (event, date) => {
+        if (event.type === "set" && date) setManifestDate(date);
+      },
+    });
+  } else {
+    setShowDatePicker(true);
+  }
+};
+
 
   // 🌍 Universal Laws List
   const universalLaws: UniversalLaw[] = [
@@ -410,33 +415,47 @@ const existingOrder = selectedVision
                       </Text>
                     </TouchableOpacity>
 
-                    {showDatePicker && Platform.OS === "ios" && (
-                      <DateTimePicker
-                        value={manifestDate || new Date()}
-                        mode="date"
-                        display="inline"
-                        minimumDate={new Date()}
-                        onChange={(event, date) => {
-                          setShowDatePicker(false);
-                          if (date) setManifestDate(date);
-                        }}
-                      />
-                    )}
+                    {/* iOS Date Picker */}
+{showDatePicker && Platform.OS === "ios" && (
+  <DateTimePicker
+    value={manifestDate || new Date(Date.now() + 24 * 60 * 60 * 1000)}
+    mode="date"
+    display="inline"
+    minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)} // ✅ only future
+    onChange={(event, date) => {
+      setShowDatePicker(false);
+      if (date) setManifestDate(date);
+    }}
+  />
+)}
 
-                    {Platform.OS === "web" && (
-                      <input
-                        type="date"
-                        onChange={(e) =>
-                          setManifestDate(new Date(e.target.value))
-                        }
-                        style={{
-                          padding: 10,
-                          borderRadius: 10,
-                          border: "1px solid #ccc",
-                          marginTop: 8,
-                        }}
-                      />
-                    )}
+{/* Web Date Picker */}
+{Platform.OS === "web" && (
+  <input
+    type="date"
+    onChange={(e) => {
+      const selected = new Date(e.target.value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selected <= today) {
+        alert("Please select a future date 🌞");
+        e.target.value = "";
+        return;
+      }
+      setManifestDate(selected);
+    }}
+    style={{
+      padding: 10,
+      borderRadius: 10,
+      border: "1px solid #ccc",
+      marginTop: 8,
+    }}
+    min={new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0]} // ✅ restrict input in calendar UI
+  />
+)}
+
 
                     {!orderPlaced ? (
                       <TouchableOpacity
