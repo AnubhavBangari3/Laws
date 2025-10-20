@@ -879,6 +879,9 @@ class VisionBoardOrderCreateView(generics.CreateAPIView):
 
         serializer.save(profile=profile, vision_item=vision_item)
 
+from datetime import date
+
+
 class VisionBoardBookView(generics.ListAPIView):
     """
     API view to list all vision board items of the logged-in user,
@@ -888,9 +891,14 @@ class VisionBoardBookView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Return vision board items for the logged-in user,
-        ordered by creation date descending (newest first).
-        """
-        profile_user=get_object_or_404(Profile, username=self.request.user)
+        profile_user = get_object_or_404(Profile, username=self.request.user)
+
+      
+        VisionBoardOrder.objects.filter(
+            profile=profile_user,
+            order_date__lte=date.today(),
+            order_delivered=False
+        ).update(order_delivered=True)
+
+        
         return VisionBoardOrder.objects.filter(profile=profile_user).order_by('-created_at')

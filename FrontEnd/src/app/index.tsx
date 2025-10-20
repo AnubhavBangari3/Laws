@@ -242,13 +242,13 @@ export default function Login() {
             <Text className="text-white text-lg font-bold">Register</Text>
           </Pressable>
 
-          <Pressable
+          {/* <Pressable
             onPress={handleLogin}
             className="w-full p-4 bg-red-600 rounded-lg items-center shadow-lg mt-4 flex-row justify-center"
           >
             <Ionicons name="logo-google" size={20} color="white" />
             <Text className="text-white text-lg font-bold ml-2">Login with Google</Text>
-          </Pressable>
+          </Pressable> */}
         </View>
   
 
